@@ -349,3 +349,33 @@ tr:hover {
     border-radius: 8px; 
     font-weight: 600; 
 }
+
+.footer {
+    background: white;
+    padding: 20px;
+    margin: 40px 20px 20px 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.footer-content {
+    text-align: center;
+    color: #495057;
+    font-size: 13px;
+}
+
+.footer-content p {
+    margin: 5px 0;
+}
+
+.footer-content a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.footer-content a:hover {
+    color: #5568d3;
+    text-decoration: underline;
+}
