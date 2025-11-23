@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Printing Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="sidebar">
+        <h1>3D Tracker</h1>
+        <div class="nav-item active" data-page="filament">Filament Library</div>
+        <div class="nav-item" data-page="models">Models Library</div>
+        <div class="nav-item" data-page="prints">Print History</div>
+        <div class="nav-item" data-page="stats">Statistics</div>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <div id="filament-page" class="page active">
+                <h1>Filament Library</h1>
+                <div class="section">
+                    <h2>Import/Export Data</h2>
+                    <button onclick="exportData()">Export All Data</button>
+                    <button class="export-btn" onclick="document.getElementById('importFile').click()">Import Data</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                </div>
+                <div class="section">
+                    <h2>Filament Inventory</h2>
+                    <div class="input-group">
+                        <input type="text" id="filamentMaterial" placeholder="Material (e.g., PLA, PETG)">
+                        <input type="text" id="filamentColor" placeholder="Color Name">
+                        <input type="color" id="filamentColorHex" value="#ff5733">
+                        <input type="number" id="filamentWeight" placeholder="Weight (g)" min="0">
+                        <select id="filamentInStock">
+                            <option value="true">In Stock</option>
+                            <option value="false">Out of Stock</option>
+                        </select>
+                    </div>
+                    <button onclick="addFilament()">Add Filament</button>
+                    <table id="filamentTable">
+                        <thead>
+                            <tr><th>Material</th><th>Color</th><th>Initial (g)</th><th>Used (g)</th><th>Remaining (g)</th><th>Status</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="filamentTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="models-page" class="page">
+                <h1>Models Library</h1>
+                <div class="section">
+                    <h2>Import/Export Data</h2>
+                    <button onclick="exportData()">Export All Data</button>
+                    <button class="export-btn" onclick="document.getElementById('importFile2').click()">Import Data</button>
+                    <input type="file" id="importFile2" accept=".json" style="display: none;">
+                </div>
+                <div class="section">
+                    <h2>Models to Print</h2>
+                    <div class="input-group">
+                        <input type="text" id="modelName" placeholder="Model Name">
+                        <input type="text" id="modelLink" placeholder="Link/Notes (optional)">
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block;margin-bottom:10px;font-weight:600;color:#495057;">Required Filaments:</label>
+                        <div id="requiredFilamentsContainer"></div>
+                        <button type="button" class="add-req-btn" onclick="addFilamentRequirement()">+ Add Filament</button>
+                    </div>
+                    <button onclick="addModel()">Add Model</button>
+                    <table id="modelTable">
+                        <thead>
+                            <tr><th>Model Name</th><th>Required Filaments</th><th>Can Print?</th><th>Link/Notes</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="modelTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="prints-page" class="page">
+                <h1>Print History</h1>
+                <div class="section">
+                    <h2>Record New Print</h2>
+                    <div class="input-group">
+                        <select id="printModel"><option value="">Select Model</option></select>
+                        <select id="printColor"><option value="">Select Color</option></select>
+                        <input type="number" id="printWeight" placeholder="Weight Used (g)" min="0" step="0.1">
+                        <input type="date" id="printDate">
+                    </div>
+                    <button onclick="addPrint()">Record Print</button>
+                </div>
+                <div class="section">
+                    <h2>Print History</h2>
+                    <table id="printTable">
+                        <thead>
+                            <tr><th>Date</th><th>Model</th><th>Color</th><th>Weight (g)</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="printTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="stats-page" class="page">
+                <h1>Statistics & Analysis</h1>
+                <div class="section">
+                    <h2>Usage Statistics</h2>
+                    <div id="usageStats"></div>
+                </div>
+                <div class="section">
+                    <h2>Printable Models</h2>
+                    <p style="color:#6b7280;margin-bottom:15px;">Models you can print with current inventory:</p>
+                    <div id="printableModels"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="editFilamentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Edit Filament</div>
+            <div class="input-group">
+                <input type="text" id="editFilamentMaterial" placeholder="Material">
+                <input type="text" id="editFilamentColor" placeholder="Color Name">
+                <input type="color" id="editFilamentColorHex">
+                <input type="number" id="editFilamentWeight" placeholder="Weight (g)" min="0">
+                <select id="editFilamentInStock">
+                    <option value="true">In Stock</option>
+                    <option value="false">Out of Stock</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button class="cancel-btn" onclick="closeEditFilamentModal()">Cancel</button>
+                <button onclick="saveEditFilament()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Edit Model</div>
+            <div class="input-group">
+                <input type="text" id="editModelName" placeholder="Model Name">
+                <input type="text" id="editModelLink" placeholder="Link/Notes">
+            </div>
+            <div style="margin-top:15px;">
+                <label style="display:block;margin-bottom:10px;font-weight:600;color:#495057;">Required Filaments:</label>
+                <div id="editRequiredFilamentsContainer"></div>
+                <button type="button" class="add-req-btn" onclick="addEditFilamentRequirement()">+ Add Filament</button>
+            </div>
+            <div class="modal-buttons">
+                <button class="cancel-btn" onclick="closeEditModelModal()">Cancel</button>
+                <button onclick="saveEditModel()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editPrintModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Edit Print Record</div>
+            <div class="input-group">
+                <input type="text" id="editPrintModel" placeholder="Model Name">
+                <input type="text" id="editPrintColor" placeholder="Color">
+                <input type="number" id="editPrintWeight" placeholder="Weight (g)" min="0" step="0.1">
+                <input type="date" id="editPrintDate">
+            </div>
+            <div class="modal-buttons">
+                <button class="cancel-btn" onclick="closeEditPrintModal()">Cancel</button>
+                <button onclick="saveEditPrint()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
