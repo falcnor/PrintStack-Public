@@ -830,6 +830,9 @@ function updateTotalWeight() {
     if (totalWeightInput) {
         totalWeightInput.value = totalWeight.toFixed(1);
     }
+
+    // Update variance analysis when weights change
+    updatePrintVarianceAnalysis();
 }
 
 // Enhanced Validation Framework
@@ -2465,44 +2468,38 @@ function addModel() {
     const supportsRequired = document.getElementById('modelSupports').value === 'true';
     const notes = document.getElementById('modelNotes').value.trim();
 
-    // Validation for enhanced fields
-    if (!name) {
-        alert('Model name is required');
-        return;
+    // Comprehensive validation - collect all errors
+    const validationErrors = [];
+
+    // Validate required fields
+    if (!name || name.trim() === '') {
+        validationErrors.push('• Model name is required');
     }
 
     if (!category) {
-        alert('Please select a category');
-        return;
+        validationErrors.push('• Please select a category');
     }
 
     if (!difficulty) {
-        alert('Please select a difficulty level');
-        return;
+        validationErrors.push('• Please select a difficulty level');
     }
 
-    // Validate print time if provided
+    // Validate optional fields
     if (printTime !== null && (printTime < 0 || printTime > 1440)) {
-        alert('Print time must be between 0 and 1440 minutes (24 hours)');
-        return;
+        validationErrors.push('• Print time must be between 0 and 1440 minutes (24 hours)');
     }
 
-    // Validate layer height if provided
     if (layerHeight !== null && (layerHeight < 0.05 || layerHeight > 1.0)) {
-        alert('Layer height must be between 0.05mm and 1.0mm');
-        return;
+        validationErrors.push('• Layer height must be between 0.05mm and 1.0mm');
     }
 
-    // Validate infill if provided
     if (infill !== null && (infill < 0 || infill > 100)) {
-        alert('Infill must be between 0% and 100%');
-        return;
+        validationErrors.push('• Infill must be between 0% and 100%');
     }
 
-    // Get filament requirements with enhanced usage data
+    // Get filament requirements and validate them
     const requirements = [];
-    let hasValidationError = false;
-    document.querySelectorAll('#requiredFilamentsContainer .filament-req-item').forEach(item => {
+    document.querySelectorAll('#requiredFilamentsContainer .filament-req-item').forEach((item, index) => {
         const searchInput = item.querySelector('.req-search');
         const expectedWeightInput = item.querySelector('.expected-weight');
         const toleranceInput = item.querySelector('.tolerance');
@@ -2515,24 +2512,21 @@ function addModel() {
                 // Validate expected weight is provided
                 const expectedWeight = parseFloat(expectedWeightInput.value);
                 if (isNaN(expectedWeight) || expectedWeight <= 0) {
-                    alert('Please provide a valid expected weight for each filament');
-                    hasValidationError = true;
+                    validationErrors.push(`• Filament ${index + 1}: Please provide a valid expected weight`);
                     return;
                 }
 
                 // Validate tolerance if provided
                 const tolerance = parseFloat(toleranceInput.value);
                 if (toleranceInput.value && !isNaN(tolerance) && (tolerance < 0 || tolerance > 100)) {
-                    alert(`Tolerance for ${f.colorName || f.color} must be between 0% and 100%`);
-                    hasValidationError = true;
+                    validationErrors.push(`• Filament ${index + 1} (${f.colorName || f.color}): Tolerance must be between 0% and 100%`);
                     return;
                 }
 
                 // Validate required count if provided
                 const requiredCount = parseInt(requiredCountInput.value);
                 if (requiredCountInput.value && (isNaN(requiredCount) || requiredCount < 1 || requiredCount > 100)) {
-                    alert(`Quantity for ${f.colorName || f.color} must be between 1 and 100`);
-                    hasValidationError = true;
+                    validationErrors.push(`• Filament ${index + 1} (${f.colorName || f.color}): Quantity must be between 1 and 100`);
                     return;
                 }
 
@@ -2549,12 +2543,14 @@ function addModel() {
         }
     });
 
-    if (hasValidationError) {
-        return;
+    if (requirements.length === 0) {
+        validationErrors.push('• Please select at least one filament from the dropdown');
     }
 
-    if (requirements.length === 0) {
-        alert('Please select at least one filament from the dropdown');
+    // Show all validation errors in a single popup
+    if (validationErrors.length > 0) {
+        const errorMessage = `Please fix the following issues:\n\n${validationErrors.join('\n')}\n\nClick OK to continue editing.`;
+        alert(errorMessage);
         return;
     }
 
@@ -2639,20 +2635,49 @@ function saveEditModel() {
     const m = models.find(x => x.id === editingModelId);
     if (!m) return;
 
-    m.name = document.getElementById('editModelName').value.trim();
-    m.link = document.getElementById('editModelLink').value.trim();
-    m.category = document.getElementById('editModelCategory').value;
-    m.difficulty = document.getElementById('editModelDifficulty').value;
-    m.printTime = parseFloat(document.getElementById('editModelPrintTime').value) || '';
-    m.layerHeight = parseFloat(document.getElementById('editModelLayerHeight').value) || '';
-    m.infill = parseInt(document.getElementById('editModelInfill').value) || '';
-    m.supportsRequired = document.getElementById('editModelSupports').value === 'true';
-    m.notes = document.getElementById('editModelNotes').value.trim();
-    m.tags = extractTagsFromNotes(m.notes);
-    // Get updated requirements with enhanced usage data
+    // Collect form data
+    const name = document.getElementById('editModelName').value.trim();
+    const link = document.getElementById('editModelLink').value.trim();
+    const category = document.getElementById('editModelCategory').value;
+    const difficulty = document.getElementById('editModelDifficulty').value;
+    const printTime = parseFloat(document.getElementById('editModelPrintTime').value) || null;
+    const layerHeight = parseFloat(document.getElementById('editModelLayerHeight').value) || null;
+    const infill = parseInt(document.getElementById('editModelInfill').value) || null;
+    const supportsRequired = document.getElementById('editModelSupports').value === 'true';
+    const notes = document.getElementById('editModelNotes').value.trim();
+
+    // Comprehensive validation - collect all errors
+    const validationErrors = [];
+
+    // Validate required fields
+    if (!name || name.trim() === '') {
+        validationErrors.push('• Model name is required');
+    }
+
+    if (!category) {
+        validationErrors.push('• Please select a category');
+    }
+
+    if (!difficulty) {
+        validationErrors.push('• Please select a difficulty level');
+    }
+
+    // Validate optional fields
+    if (printTime !== null && (printTime < 0 || printTime > 1440)) {
+        validationErrors.push('• Print time must be between 0 and 1440 minutes (24 hours)');
+    }
+
+    if (layerHeight !== null && (layerHeight < 0.05 || layerHeight > 1.0)) {
+        validationErrors.push('• Layer height must be between 0.05mm and 1.0mm');
+    }
+
+    if (infill !== null && (infill < 0 || infill > 100)) {
+        validationErrors.push('• Infill must be between 0% and 100%');
+    }
+
+    // Get and validate filament requirements
     const requirements = [];
-    let hasValidationError = false;
-    document.querySelectorAll('#editRequiredFilamentsContainer .filament-req-item').forEach(item => {
+    document.querySelectorAll('#editRequiredFilamentsContainer .filament-req-item').forEach((item, index) => {
         const searchInput = item.querySelector('.req-search');
         const expectedWeightInput = item.querySelector('.expected-weight');
         const toleranceInput = item.querySelector('.tolerance');
@@ -2665,24 +2690,21 @@ function saveEditModel() {
                 // Validate expected weight is provided
                 const expectedWeight = parseFloat(expectedWeightInput.value);
                 if (isNaN(expectedWeight) || expectedWeight <= 0) {
-                    alert('Please provide a valid expected weight for each filament');
-                    hasValidationError = true;
+                    validationErrors.push(`• Filament ${index + 1}: Please provide a valid expected weight`);
                     return;
                 }
 
                 // Validate tolerance if provided
                 const tolerance = parseFloat(toleranceInput.value);
                 if (toleranceInput.value && !isNaN(tolerance) && (tolerance < 0 || tolerance > 100)) {
-                    alert(`Tolerance for ${f.colorName || f.color} must be between 0% and 100%`);
-                    hasValidationError = true;
+                    validationErrors.push(`• Filament ${index + 1} (${f.colorName || f.color}): Tolerance must be between 0% and 100%`);
                     return;
                 }
 
                 // Validate required count if provided
                 const requiredCount = parseInt(requiredCountInput.value);
                 if (requiredCountInput.value && (isNaN(requiredCount) || requiredCount < 1 || requiredCount > 100)) {
-                    alert(`Quantity for ${f.colorName || f.color} must be between 1 and 100`);
-                    hasValidationError = true;
+                    validationErrors.push(`• Filament ${index + 1} (${f.colorName || f.color}): Quantity must be between 1 and 100`);
                     return;
                 }
 
@@ -2699,13 +2721,29 @@ function saveEditModel() {
         }
     });
 
-    if (hasValidationError) {
+    if (requirements.length === 0) {
+        validationErrors.push('• Please select at least one filament from the dropdown');
+    }
+
+    // Show all validation errors in a single popup
+    if (validationErrors.length > 0) {
+        const errorMessage = `Please fix the following issues:\n\n${validationErrors.join('\n')}\n\nClick OK to continue editing.`;
+        alert(errorMessage);
         return;
     }
 
+    // Update model data
+    m.name = name;
+    m.link = link;
+    m.category = category;
+    m.difficulty = difficulty;
+    m.printTime = printTime;
+    m.layerHeight = layerHeight;
+    m.infill = infill;
+    m.supportsRequired = supportsRequired;
+    m.notes = notes;
     m.requirements = requirements;
-
-    if (!m.requirements.length) return alert('At least one filament required');
+    m.tags = extractTagsFromNotes(notes);
 
     saveData();
     updateAllTables();
@@ -3028,18 +3066,138 @@ function validateModelFilamentRelationships() {
     return issues;
 }
 
+// Print data migration functions for User Story 3
+function migratePrintData() {
+    let migrationCount = 0;
+    const migrationWarnings = [];
+
+    prints.forEach(print => {
+        let needsMigration = false;
+
+        // Migrate legacy single-filament format to multi-filament array
+        if (!print.filaments && print.color) {
+            // Find the filament to get additional details
+            const filament = filaments.find(f => f.color === print.color);
+            print.filaments = [{
+                filamentId: filament ? filament.id : null,
+                color: print.color,
+                material: filament ? (filament.materialType || filament.material) : 'Unknown',
+                weight: print.weight || 0,
+                colorHex: filament ? filament.colorHex : '#ccc'
+            }];
+            migrationWarnings.push(`Print "${print.modelName}": Migrated single filament (${print.color}) to enhanced format`);
+            needsMigration = true;
+        }
+
+        // Ensure User Story 3 enhanced fields exist with defaults
+        if (!print.qualityRating) {
+            print.qualityRating = null; // Explicitly set to null for consistency
+            needsMigration = true;
+        }
+
+        if (!print.printNotes) {
+            print.printNotes = null; // Explicitly set to null for consistency
+            needsMigration = true;
+        }
+
+        if (!print.printDuration) {
+            print.printDuration = null; // Explicitly set to null for consistency
+            needsMigration = true;
+        }
+
+        if (!print.usageVariance && print.modelName) {
+            // Calculate variance if model is found with expected weights
+            const model = models.find(m => m.name === print.modelName);
+            if (model && model.requirements && model.requirements.length > 0) {
+                const expectedTotal = calculateTotalExpectedUsage(model);
+                const actualTotal = print.weight || 0;
+                const variancePercent = ((actualTotal - expectedTotal) / expectedTotal * 100).toFixed(1);
+                print.usageVariance = {
+                    expected: expectedTotal,
+                    actual: actualTotal,
+                    variance: parseFloat(variancePercent)
+                };
+                migrationWarnings.push(`Print "${print.modelName}": Calculated usage variance (${variancePercent}%)`);
+                needsMigration = true;
+            }
+        }
+
+        // Ensure timestamp exists
+        if (!print.timestamp) {
+            // Try to derive from existing date or create from current time
+            if (print.date) {
+                print.timestamp = new Date(print.date + 'T12:00:00').toISOString();
+            } else {
+                print.timestamp = new Date().toISOString();
+            }
+            needsMigration = true;
+        }
+
+        if (needsMigration) {
+            migrationCount++;
+        }
+    });
+
+    // Log migration summary
+    if (migrationCount > 0) {
+        console.log(`Print data migration completed: ${migrationCount} prints migrated`);
+        console.groupCollapsed('Print Migration Details');
+        migrationWarnings.forEach(warning => console.log(warning));
+        console.groupEnd();
+    }
+
+    return { migratedCount: migrationCount, warnings: migrationWarnings };
+}
+
 // Run migration on data load if needed
 if (models.length > 0) {
     migrateModelData();
 }
 
+if (prints.length > 0) {
+    migratePrintData();
+}
+
 // Print Functions
 function addPrint() {
-    const modelName = document.getElementById('printModel').value;
+    // Enhanced validation and data collection for User Story 3
+    const modelName = document.getElementById('printModel').value.trim();
     const totalWeight = parseFloat(document.getElementById('printWeight').value);
     const date = document.getElementById('printDate').value;
+    const qualityRating = document.getElementById('printQualityRating').value;
+    const printNotes = document.getElementById('printNotes').value.trim();
+    const printDuration = parseFloat(document.getElementById('printDuration').value) || null;
 
-    if (!modelName || !totalWeight || !date) return alert('Fill model, weight, and date fields');
+    // Comprehensive validation - collect all errors
+    const validationErrors = [];
+
+    // Validate required fields
+    if (!modelName || modelName.trim() === '') {
+        validationErrors.push('• Model name is required');
+    }
+
+    if (!totalWeight || totalWeight <= 0 || isNaN(totalWeight)) {
+        validationErrors.push('• Total weight must be a positive number');
+    }
+
+    if (!date) {
+        validationErrors.push('• Print date is required');
+    }
+
+    // Validate optional fields
+    if (printDuration !== null && (printDuration < 0 || printDuration > 168 || isNaN(printDuration))) {
+        validationErrors.push('• Print duration must be between 0 and 168 hours (1 week)');
+    }
+
+    // Validate quality rating if provided
+    if (qualityRating && !['excellent', 'good', 'fair', 'poor'].includes(qualityRating)) {
+        validationErrors.push('• Invalid quality rating selected');
+    }
+
+    // Validate print notes length if provided
+    if (printNotes && printNotes.length > 500) {
+        validationErrors.push('• Print notes must be 500 characters or less');
+    }
 
     // Collect selected filaments
     const printFilaments = [];
@@ -3063,27 +3221,76 @@ function addPrint() {
         }
     });
 
-    if (printFilaments.length === 0) return alert('Please select at least one filament and specify weights');
+    if (printFilaments.length === 0) {
+        validationErrors.push('• Please select at least one filament and specify weights');
+    }
 
-    // Create print record with new multi-filament structure
+    // Check for filament validation issues
+    printFilaments.forEach((filament, index) => {
+        if (filament.weight <= 0) {
+            validationErrors.push(`• Filament ${index + 1}: Weight must be greater than 0g`);
+        }
+        if (!filament.filamentId || isNaN(filament.filamentId)) {
+            validationErrors.push(`• Filament ${index + 1}: Please select a valid filament`);
+        }
+    });
+
+    // Calculate usage variance if model has expected weights
+    let usageVariance = null;
+    const model = models.find(m => m.name === modelName);
+    if (model && model.requirements && model.requirements.length > 0) {
+        const expectedTotal = calculateTotalExpectedUsage(model);
+        const actualTotal = totalWeight;
+        const variancePercent = ((actualTotal - expectedTotal) / expectedTotal * 100).toFixed(1);
+        usageVariance = {
+            expected: expectedTotal,
+            actual: actualTotal,
+            variance: parseFloat(variancePercent)
+        };
+    }
+
+    // Show all validation errors in a single popup
+    if (validationErrors.length > 0) {
+        const errorMessage = `Please fix the following issues:\n\n${validationErrors.join('\n')}\n\nClick OK to continue editing.`;
+        alert(errorMessage);
+        return;
+    }
+
+    // Create enhanced print record with User Story 3 fields
     const print = {
         id: Date.now(),
         modelName: modelName,
         weight: totalWeight,
         date: date,
         filaments: printFilaments,
+        // New enhanced fields
+        qualityRating: qualityRating || null,
+        printNotes: printNotes || null,
+        printDuration: printDuration,
+        usageVariance: usageVariance,
+        timestamp: new Date().toISOString(),
         // For backwards compatibility
         color: printFilaments.length === 1 ? printFilaments[0].color : `${printFilaments.length}-color print`
     };
 
     prints.push(print);
 
-    // Clear form
+    // Automatic inventory deduction for User Story 3
+    deductFilamentInventory(printFilaments);
+
+    // Clear form including enhanced fields
     document.getElementById('printModel').value = '';
     document.getElementById('printModel').removeAttribute('data-selected-model');
     document.querySelector('.model-search-results').style.display = 'none';
     document.getElementById('printWeight').value = '';
     document.getElementById('printDate').value = '';
+    document.getElementById('printQualityRating').value = '';
+    document.getElementById('printNotes').value = '';
+    document.getElementById('printDuration').value = '';
+
+    // Hide variance section
+    document.getElementById('usageVarianceSection').style.display = 'none';
+
     const container = document.getElementById('printFilamentsContainer');
     container.innerHTML = '';
     addPrintFilament(); // Add back one empty filament field
@@ -3320,7 +3527,7 @@ function clearPrintFilaments() {
 function updatePrintTable() {
     const tbody = document.getElementById('printTableBody');
     if (!prints.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No prints recorded yet</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No prints recorded yet</td></tr>';
         return;
     }
     
@@ -3348,12 +3555,34 @@ function updatePrintTable() {
             `;
         }
 
+        // Generate quality rating display
+        let qualityDisplay = '<span class="text-muted">—</span>';
+        if (p.qualityRating) {
+            const qualityClass = `quality-${p.qualityRating}`;
+            const qualityText = p.qualityRating.charAt(0).toUpperCase() + p.qualityRating.slice(1);
+            qualityDisplay = `<span class="quality-indicator ${qualityClass}" title="Print quality: ${qualityText}">${qualityText.substring(0, 3)}</span>`;
+        }
+
+        // Generate usage and variance display
+        let usageDisplay = `<div class="usage-compact">${p.weight.toFixed(1)}g</div>`;
+        let varianceDisplay = '<span class="text-muted">—</span>';
+
+        if (p.usageVariance) {
+            const variance = p.usageVariance.variance;
+            const varianceClass = variance === 0 ? 'variance-neutral' : (variance > 0 ? 'variance-positive' : 'variance-negative');
+            const varianceSymbol = variance === 0 ? '±' : (variance > 0 ? '+' : '');
+            varianceDisplay = `<div class="variance-display ${varianceClass}" title="Expected: ${p.usageVariance.expected.toFixed(1)}g, Actual: ${p.usageVariance.actual.toFixed(1)}g">
+                <span>${varianceSymbol}${variance.toFixed(1)}%</span>
+            </div>`;
+        }
+
         return `
             <tr>
                 <td>${p.date}</td>
                 <td>${p.modelName}</td>
-                <td>${filamentDisplay}</td>
-                <td>${p.weight.toFixed(1)}</td>
+                <td>${qualityDisplay}</td>
+                <td>${usageDisplay}</td>
+                <td>${varianceDisplay}</td>
                 <td>
                     <button class="edit-btn" onclick="editPrint(${p.id})">Edit</button>
                     <button class="delete-btn" onclick="deletePrint(${p.id})">Delete</button>
@@ -3363,22 +3592,295 @@ function updatePrintTable() {
     }).join('');
 }
 
+/**
+ * Show real-time variance analysis when model is selected and filaments are entered
+ */
+/**
+ * Automatic inventory deduction when print is recorded - User Story 3
+ * Includes negative inventory prevention with user override option
+ * @param {Array} printFilaments - Array of filament usage data from print
+ */
+function deductFilamentInventory(printFilaments) {
+    if (!printFilaments || !Array.isArray(printFilaments)) {
+        return;
+    }
+
+    const deductions = []; // Track what would be deducted for confirmation dialog
+    let hasNegativeInventory = false;
+
+    // First pass: Check for negative inventory scenarios
+    printFilaments.forEach(printFilament => {
+        const filament = filaments.find(f => f.id === printFilament.filamentId);
+        if (filament) {
+            const newWeight = filament.weight - printFilament.weight;
+            if (newWeight < 0) {
+                hasNegativeInventory = true;
+                deductions.push({
+                    filament: filament,
+                    currentWeight: filament.weight,
+                    deductionAmount: printFilament.weight,
+                    newWeight: newWeight,
+                    deficit: Math.abs(newWeight)
+                });
+            } else {
+                deductions.push({
+                    filament: filament,
+                    currentWeight: filament.weight,
+                    deductionAmount: printFilament.weight,
+                    newWeight: newWeight,
+                    deficit: 0
+                });
+            }
+        }
+    });
+
+    // If negative inventory would occur, ask user for confirmation
+    if (hasNegativeInventory) {
+        const negativeItems = deductions.filter(d => d.deficit > 0);
+        const message = `Warning: This print will result in negative inventory:\n\n` +
+            negativeItems.map(item =>
+                `${item.filament.brand} ${item.filament.color}: ${item.currentWeight.toFixed(1)}g - ${item.deductionAmount.toFixed(1)}g = ${item.newWeight.toFixed(1)}g (${item.deficit.toFixed(1)}g deficit)`
+            ).join('\n') +
+            `\n\nClick OK to proceed with negative inventory, or Cancel to stop.`;
+
+        if (!confirm(message)) {
+            // User cancelled - don't deduct anything
+            return;
+        }
+    }
+
+    // Second pass: Execute the deductions (with user confirmation if needed)
+    printFilaments.forEach(printFilament => {
+        const filament = filaments.find(f => f.id === printFilament.filamentId);
+        if (filament) {
+            const previousWeight = filament.weight;
+            filament.weight = Math.max(0, filament.weight - printFilament.weight);
+
+            // Log the deduction for debugging and inventory tracking
+            console.log(`Filament inventory deducted: ${filament.color} - Previous: ${previousWeight.toFixed(1)}g, Deducted: ${printFilament.weight.toFixed(1)}g, New: ${filament.weight.toFixed(1)}g`);
+
+            // Add inventory warning annotation if negative
+            if (filament.weight === 0 && printFilament.weight > previousWeight) {
+                console.warn(`Negative inventory prevented for ${filament.color}: ${previousWeight.toFixed(1)}g available, ${printFilament.weight.toFixed(1)}g required`);
+            }
+        }
+    });
+}
+
+/**
+ * Calculate average usage variance across all prints - User Story 3
+ * @returns {Object} Average variance statistics
+ */
+function calculateAverageUsageVariance() {
+    if (!prints.length || prints.length === 0) {
+        return { averageVariance: 0, trend: 'insufficient-data' };
+    }
+
+    const printsWithVariance = prints.filter(p => p.usageVariance && typeof p.usageVariance.variance === 'number');
+
+    if (printsWithVariance.length === 0) {
+        return { averageVariance: 0, trend: 'no-variance-data' };
+    }
+
+    const totalVariance = printsWithVariance.reduce((sum, p) => sum + p.usageVariance.variance, 0);
+    const averageVariance = totalVariance / printsWithVariance.length;
+
+    // Determine trend: positive variance = using more than expected
+    const trend = averageVariance > 10 ? 'high-usage' :
+                  averageVariance < -10 ? 'efficient' : 'normal';
+
+    return { averageVariance, trend };
+}
+
+/**
+ * Analyze filament consumption patterns by material type - User Story 3
+ * @returns {Array} Material usage data sorted by consumption
+ */
+function analyzeMaterialConsumption() {
+    const materialUsage = {};
+
+    prints.forEach(print => {
+        if (print.filaments && Array.isArray(print.filaments)) {
+            print.filaments.forEach(filament => {
+                const material = filament.material || 'Unknown';
+                if (!materialUsage[material]) {
+                    materialUsage[material] = { material, totalWeight: 0, printCount: 0 };
+                }
+                materialUsage[material].totalWeight += filament.weight;
+                materialUsage[material].printCount += 1;
+            });
+        }
+    });
+
+    return Object.values(materialUsage)
+        .sort((a, b) => b.totalWeight - a.totalWeight)
+        .map(item => ({
+            ...item,
+            averageWeightPerPrint: item.printCount > 0 ? item.totalWeight / item.printCount : 0
+        }));
+}
+
+/**
+ * Identify most frequently printed models - User Story 3
+ * @param {number} limit - Maximum number of models to return
+ * @returns {Array} Model frequency data
+ */
+function analyzePrintFrequency(limit = 5) {
+    const modelFrequency = {};
+
+    prints.forEach(print => {
+        const modelName = print.modelName;
+        if (!modelFrequency[modelName]) {
+            modelFrequency[modelName] = { modelName: modelName, count: 0, totalWeight: 0 };
+        }
+        modelFrequency[modelName].count += 1;
+        modelFrequency[modelName].totalWeight += print.weight || 0;
+    });
+
+    return Object.values(modelFrequency)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, limit)
+        .map(item => ({
+            ...item,
+            averageWeightPerPrint: item.count > 0 ? item.totalWeight / item.count : 0
+        }));
+}
+
+function updatePrintVarianceAnalysis() {
+    const modelName = document.getElementById('printModel').value.trim();
+    const varianceSection = document.getElementById('usageVarianceSection');
+    const varianceContent = document.getElementById('varianceAnalysisContent');
+
+    if (!modelName) {
+        varianceSection.style.display = 'none';
+        return;
+    }
+
+    const model = models.find(m => m.name === modelName);
+    if (!model || !model.requirements || model.requirements.length === 0) {
+        varianceSection.style.display = 'none';
+        return;
+    }
+
+    // Collect selected filaments and weights
+    const selectedFilaments = [];
+    let totalActualWeight = 0;
+
+    document.querySelectorAll('#printFilamentsContainer .print-filament-item').forEach(item => {
+        const selectInput = item.querySelector('.print-filament-select');
+        const weightInput = item.querySelector('.print-filament-weight');
+        const filamentId = parseInt(selectInput.value);
+        const weight = parseFloat(weightInput.value) || 0;
+
+        if (!isNaN(filamentId) && filamentId > 0 && weight > 0) {
+            const filament = filaments.find(f => f.id === filamentId);
+            if (filament) {
+                selectedFilaments.push({
+                    filamentId: filamentId,
+                    color: filament.colorName || filament.color,
+                    material: filament.materialType || filament.material,
+                    actualWeight: weight,
+                    expectedWeight: getExpectedWeightForFilamentRequirement(model, filamentId)
+                });
+                totalActualWeight += weight;
+            }
+        }
+    });
+
+    if (selectedFilaments.length === 0) {
+        varianceSection.style.display = 'none';
+        return;
+    }
+
+    // Calculate variance
+    const expectedTotal = calculateTotalExpectedUsage(model);
+    const actualTotal = totalActualWeight;
+    const variancePercent = expectedTotal > 0 ? ((actualTotal - expectedTotal) / expectedTotal * 100) : 0;
+
+    varianceSection.style.display = 'block';
+    varianceContent.innerHTML = `
+        <div class="variance-analysis-details">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;">
+                <div style="text-align: center; padding: 8px; background: white; border-radius: 4px;">
+                    <div style="font-size: 11px; color: #6c757d; margin-bottom: 4px;">Expected Usage</div>
+                    <div style="font-weight: 600; color: #495057;">${expectedTotal.toFixed(1)}g</div>
+                </div>
+                <div style="text-align: center; padding: 8px; background: white; border-radius: 4px;">
+                    <div style="font-size: 11px; color: #6c757d; margin-bottom: 4px;">Actual Usage</div>
+                    <div style="font-weight: 600; color: #495057;">${actualTotal.toFixed(1)}g</div>
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <div class="variance-display ${variancePercent === 0 ? 'variance-neutral' : (variancePercent > 0 ? 'variance-positive' : 'variance-negative')}" style="justify-content: center; font-size: 14px;">
+                    <span>${variancePercent === 0 ? '±' : (variancePercent > 0 ? '+' : '')}${variancePercent.toFixed(1)}% variance</span>
+                </div>
+            </div>
+            ${selectedFilaments.map(f => `
+                <div style="margin-top: 8px; padding: 6px; background: white; border-radius: 4px; font-size: 11px;">
+                    <strong>${f.color} (${f.material})</strong>:
+                    Expected ${f.expectedWeight?.toFixed(1) || '0.0'}g →
+                    Actual ${f.actualWeight.toFixed(1)}g
+                    ${f.expectedWeight ? `(${((f.actualWeight - f.expectedWeight) / f.expectedWeight * 100).toFixed(1)}%)` : ''}
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+/**
+ * Helper function to get expected weight for a filament from model requirements
+ */
+function getExpectedWeightForFilamentRequirement(model, filamentId) {
+    const requirement = model.requirements?.find(req => req.filamentId === filamentId);
+    return requirement?.expectedWeight || 0;
+}
+
 // Statistics Functions
+/**
+ * Enhanced print statistics display with User Story 3 features
+ * Shows usage patterns, quality trends, variance analysis, and material consumption
+ */
 function updateUsageStats() {
     const el = document.getElementById('usageStats');
     if (!prints.length) {
         el.innerHTML = '<div class="empty-state">No prints recorded yet</div>';
         return;
     }
-    
+
+    // Basic usage statistics
     const byColor = {};
     prints.forEach(p => byColor[p.color] = (byColor[p.color] || 0) + p.weight);
-    
+
     const byModel = {};
     prints.forEach(p => byModel[p.modelName] = (byModel[p.modelName] || 0) + p.weight);
-    
+
     const total = prints.reduce((s, p) => s + p.weight, 0);
-    
+
+    // Enhanced User Story 3 statistics
+    const varianceStats = calculateAverageUsageVariance();
+    const materialConsumption = analyzeMaterialConsumption();
+    const printFrequency = analyzePrintFrequency(3); // Top 3 models
+
+    // Quality rating distribution
+    const qualityDistribution = {};
+    let qualityCount = 0;
+    prints.forEach(p => {
+        if (p.qualityRating) {
+            qualityDistribution[p.qualityRating] = (qualityDistribution[p.qualityRating] || 0) + 1;
+            qualityCount++;
+        }
+    });
+
+    // Generate quality indicators
+    const qualityIndicators = Object.entries(qualityDistribution)
+        .map(([quality, count]) => {
+            const qualityClass = `quality-${quality}`;
+            const qualityText = quality.charAt(0).toUpperCase() + quality.slice(1);
+            const percentage = ((count / qualityCount) * 100).toFixed(1);
+            return `<div class="quality-stat"><span class="quality-indicator ${qualityClass}">${qualityText}: ${count} (${percentage}%)</span></div>`;
+        })
+        .join('');
+
     el.innerHTML = `
         <div class="stats-grid">
             <div class="stats-card">
@@ -3400,6 +3902,38 @@ function updateUsageStats() {
                 </table>
             </div>
         </div>
+
+        <!-- Enhanced User Story 3 Statistics -->
+        <div class="stats-grid" style="margin-top: 20px;">
+            <div class="stats-card">
+                <h3>Print Quality Distribution</h3>
+                ${qualityCount > 0 ? qualityIndicators : '<div class="text-muted">No quality ratings recorded</div>'}
+            </div>
+            <div class="stats-card">
+                <h3>Usage Variance Analysis</h3>
+                <div class="variance-stat">
+                    <div>Average Variance: <span class="${varianceStats.trend === 'high-usage' ? 'text-danger' : varianceStats.trend === 'efficient' ? 'text-success' : 'text-muted'}">${varianceStats.averageVariance.toFixed(1)}%</span></div>
+                    <div>Trend: <span class="text-muted">${varianceStats.trend.replace('-', ' ').toUpperCase()}</span></div>
+                </div>
+            </div>
+            <div class="stats-card">
+                <h3>Material Consumption</h3>
+                <table>
+                    ${materialConsumption.slice(0, 3).map(item =>
+                        `<tr><td>${item.material}</td><td>${item.totalWeight.toFixed(1)}g</td><td>${item.printCount} prints</td></tr>`
+                    ).join('')}
+                </table>
+            </div>
+            <div class="stats-card">
+                <h3>Most Printed Models</h3>
+                <table>
+                    ${printFrequency.map(item =>
+                        `<tr><td>${item.modelName}</td><td>${item.count} times</td><td>${item.totalWeight.toFixed(1)}g</td></tr>`
+                    ).join('')}
+                </table>
+            </div>
+        </div>
+
         <div class="total-banner">Total used: ${total.toFixed(1)}g over ${prints.length} prints</div>
     `;
 }

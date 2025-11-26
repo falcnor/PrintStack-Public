@@ -1954,10 +1954,228 @@ mark {
     .category-item-actions {
         justify-content: center;
     }
-    
+
     .add-category-form .input-group {
         flex-direction: column;
         gap: 8px;
+    }
+}
+
+/* Enhanced Print Form Styles - User Story 3 */
+.print-details-section {
+    border: 1px solid #dee2e6;
+}
+
+.print-quality-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.print-details-section .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.print-details-section label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+}
+
+.print-details-section select,
+.print-details-section textarea,
+.print-details-section input[type="number"] {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.print-details-section select:focus,
+.print-details-section textarea:focus,
+.print-details-section input[type="number"]:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.print-details-section textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+}
+
+.usage-variance-section {
+    border: 1px solid #adb5bd;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.usage-variance-section h3 {
+    color: #495057;
+    font-size: 16px;
+    border-bottom: 2px solid #6c757d;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+/* Print Quality Rating Visualization */
+.quality-indicator {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.quality-excellent {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.quality-good {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.quality-fair {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.quality-poor {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Variance Display */
+.variance-display {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.variance-positive {
+    color: #28a745;
+}
+
+.variance-negative {
+    color: #dc3545;
+}
+
+.variance-neutral {
+    color: #6c757d;
+}
+
+/* Mobile Responsive Styles for Print Form */
+@media (max-width: 768px) {
+    .print-details-section {
+        margin-top: 15px;
+        padding: 12px;
+    }
+
+    .print-quality-controls {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .print-details-section h3 {
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+
+    .usage-variance-section {
+        margin-top: 15px;
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .print-details-section {
+        margin-top: 10px;
+        padding: 10px;
+    }
+
+    .print-details-section h3 {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .print-quality-controls {
+        gap: 10px;
+    }
+
+    .print-details-section select,
+    .print-details-section textarea,
+    .print-details-section input[type="number"] {
+        font-size: 16px; /* Prevent zoom on iOS Safari */
+        padding: 10px 12px;
+    }
+
+    .usage-variance-section {
+        margin-top: 10px;
+        padding: 10px;
+    }
+
+    .quality-indicator {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .variance-display {
+        font-size: 11px;
+    }
+}
+
+/* Print History Table Enhanced Styles */
+#_printTable th:nth-child(1) { /* Date */
+    width: 80px;
+}
+
+#_printTable th:nth-child(2) { /* Model */
+    width: 120px;
+}
+
+#_printTable th:nth-child(3) { /* Quality */
+    width: 80px;
+}
+
+#_printTable th:nth-child(4) { /* Usage */
+    width: 100px;
+}
+
+#_printTable th:nth-child(5) { /* Variance */
+    width: 80px;
+}
+
+#_printTable th:nth-child(6) { /* Action */
+    width: 120px;
+}
+
+@media (max-width: 768px) {
+    #_printTable th:nth-child(3), /* Quality */
+    #_printTable th:nth-child(5) { /* Variance */
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    #_printTable th:nth-child(4) { /* Usage */
+        width: 80px;
+    }
+
+    #_printTable th:nth-child(6) { /* Action */
+        width: 80px;
     }
 }
 

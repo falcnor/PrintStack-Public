@@ -296,18 +296,89 @@
                         <input type="number" id="printWeight" placeholder="Total Weight Used (g)" min="0" step="0.1" readonly style="background: #f8f9fa; cursor: not-allowed;" title="Total weight calculated from individual filament weights">
                         <input type="date" id="printDate" title="Print date (defaults to today)">
                     </div>
+
+                    <!-- Enhanced Print Details Section -->
+                    <div class="print-details-section" style="margin-top:20px; padding:15px; background:#f8f9fa; border-radius:8px;">
+                        <h3 style="margin:0 0 15px 0; color:#495057;">Print Quality Details</h3>
+                        <div class="print-quality-controls">
+                            <div class="form-group">
+                                <label for="printQualityRating" id="printQualityRatingLabel">Print Quality Rating</label>
+                                <select id="printQualityRating" name="qualityRating" aria-describedby="qualityRatingHelp" title="Rate the overall quality of this print">
+                                    <option value="">Select Quality...</option>
+                                    <option value="excellent">Excellent - Perfect print</option>
+                                    <option value="good">Good - Minor issues</option>
+                                    <option value="fair">Fair - Noticeable flaws</option>
+                                    <option value="poor">Poor - Major issues failed</option>
+                                </select>
+                                <small id="qualityRatingHelp" class="form-help">Rate the quality to track printing success over time</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="printNotes" id="printNotesLabel">Print Notes</label>
+                                <textarea id="printNotes" name="printNotes" rows="2" placeholder="Notes about print settings, issues, or observations..." aria-describedby="printNotesHelp" title="Add any relevant notes about this print"></textarea>
+                                <small id="printNotesHelp" class="form-help">Record print settings, problems encountered, or successful techniques</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="printDuration" id="printDurationLabel">Actual Print Time (hours)</label>
+                                <input type="number" id="printDuration" name="printDuration" placeholder="2.5" min="0" step="0.1" aria-describedby="printDurationHelp" title="Actual time this print took">
+                                <small id="printDurationHelp" class="form-help">Optional: Record actual vs estimated print time</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <div style="margin-top:15px;">
                         <label style="display:block;margin-bottom:10px;font-weight:600;color:#495057;">Filaments Used:</label>
                         <div id="printFilamentsContainer"></div>
                         <button type="button" class="add-req-btn" onclick="addPrintFilament()">+ Add Filament</button>
                     </div>
+
+                    <!-- Usage Variance Analysis Section -->
+                    <div class="usage-variance-section" style="margin-top:20px; padding:15px; background:#e9ecef; border-radius:8px; display:none;" id="usageVarianceSection">
+                        <h3 style="margin:0 0 10px 0; color:#495057;">Usage Variance Analysis</h3>
+                        <div id="varianceAnalysisContent">
+                            <!-- Variance analysis will be populated here dynamically -->
+                        </div>
+                    </div>
+
                     <button onclick="addPrint()">Record Print</button>
+
+                    <!-- Progressive Enhancement: Fallback for JavaScript disabled -->
+                    <noscript>
+                        <div style="margin-top:20px; padding:15px; background:#fff3cd; border:1px solid #ffeaa7; border-radius:8px;">
+                            <h4 style="margin:0 0 10px 0; color:#856404;">Basic Print Entry (JavaScript Disabled)</h4>
+                            <p style="margin:0 0 15px 0; color:#856404;">JavaScript is disabled. Please enable it for enhanced features like model search, multiple filament tracking, and variance analysis.</p>
+                            <form action="#" method="post" onsubmit="alert('Please enable JavaScript to record prints.'); return false;">
+                                <div style="display:grid; grid-template-columns:1fr; gap:15px; margin-bottom:15px;">
+                                    <div>
+                                        <label for="basicPrintModel" style="display:block; margin-bottom:5px; font-weight:600; color:#495057;">Model Name</label>
+                                        <input type="text" id="basicPrintModel" name="modelName" required placeholder="Model name" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                                    </div>
+                                    <div>
+                                        <label for="basicPrintWeight" style="display:block; margin-bottom:5px; font-weight:600; color:#495057;">Weight Used (g)</label>
+                                        <input type="number" id="basicPrintWeight" name="weight" required min="0" step="0.1" placeholder="0.0" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                                    </div>
+                                    <div>
+                                        <label for="basicPrintDate" style="display:block; margin-bottom:5px; font-weight:600; color:#495057;">Date</label>
+                                        <input type="date" id="basicPrintDate" name="date" required style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                                    </div>
+                                    <div>
+                                        <label for="basicPrintColor" style="display:block; margin-bottom:5px; font-weight:600; color:#495057;">Filament Color</label>
+                                        <input type="text" id="basicPrintColor" name="color" placeholder="Color name" style="width:100%; padding:8px; border:1px solid #ced4da; border-radius:4px;">
+                                    </div>
+                                </div>
+                                <button type="submit" disabled style="background:#6c757d; color:white; padding:10px 20px; border:none; border-radius:4px; cursor:not-allowed;">
+                                    JavaScript Required to Save
+                                </button>
+                            </form>
+                        </div>
+                    </noscript>
                 </div>
                 <div class="section">
                     <h2>Print History</h2>
                     <table id="printTable">
                         <thead>
-                            <tr><th>Date</th><th>Model</th><th>Color</th><th>Weight (g)</th><th>Action</th></tr>
+                            <tr><th>Date</th><th>Model</th><th>Quality</th><th>Usage</th><th>Variance</th><th>Action</th></tr>
                         </thead>
                         <tbody id="printTableBody"></tbody>
                     </table>
