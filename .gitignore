@@ -64,3 +64,8 @@ Thumbs.db
 *.bak
 *.backup
 backup/
+
+# Misc files
+*LATEST_DEPLOYMENT*
+*IMPLEMENTATION_TEST*
+*test_*
