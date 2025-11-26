@@ -2759,21 +2759,35 @@ function deleteModel(id) {
     }
 }
 
+/**
+ * Determines if a model can be printed based on available filament inventory
+ * @param {Object} m - The model to check for printability
+ * @returns {Object} Printability status with details and count
+ */
 function canPrintModel(m) {
+    // Early return for models with no filament requirements
     if (!m.requirements || m.requirements.length === 0) {
-        return { canPrint: false, missingRequirements: ['None defined'], availableFilaments: [], canPrintCount: 0 };
+        return {
+            canPrint: false,
+            missingRequirements: ['None defined'],
+            availableFilaments: [],
+            canPrintCount: 0
+        };
     }
 
-    const missing = [];
-    const availableFilaments = [];
-    let maxCanPrintCount = Infinity; // Maximum number of times this model can be printed based on available filament
+    const missing = [];              // Required filaments that are missing or out of stock
+    const availableFilaments = [];   // Available filaments that meet requirements
+    let maxCanPrintCount = Infinity; // Maximum prints possible based最 limited filament
 
+    // Check each filament requirement against available inventory
     m.requirements.forEach(req => {
         const filament = filaments.find(f => f.id === req.filamentId);
         if (!filament || !filament.inStock) {
+            // Track missing or out-of-stock filaments with descriptive messages
             missing.push(`${req.color} (${req.material}) - ${filament ? 'Out of Stock' : 'Missing'}`);
-            maxCanPrintCount = 0;
+            maxCanPrintCount = 0; // Cannot print if any requirement is unavailable
         } else {
+            // Store available filament information for reference
             availableFilaments.push({
                 filament: filament,
                 requirement: req,
@@ -2781,19 +2795,20 @@ function canPrintModel(m) {
                 tolerance: req.tolerance || 10
             });
 
-            // Calculate how many times we can print this model based on available filament
+            // Calculate maximum prints possible for this specific filament
             if (req.expectedWeight && req.expectedWeight > 0) {
                 const canPrintCount = Math.floor(filament.weight / req.expectedWeight);
-                // Account for required count per print
+                // Account for quantity required per print (e.g., 2 identical parts)
                 const actualCount = Math.floor(canPrintCount / (req.requiredCount || 1));
+                // Overall print count limited by most constrained filament
                 maxCanPrintCount = Math.min(maxCanPrintCount, actualCount);
             }
         }
     });
 
-    // If any required weight is not provided or invalid, we can't determine print count
+    // Handle edge case: if no expected weights defined, assume printable if all in stock
     if (maxCanPrintCount === Infinity) {
-        maxCanPrintCount = missing.length === 0 ? 1 : 0; // Basic check - if all in stock, can print at least once
+        maxCanPrintCount = missing.length === 0 ? 1 : 0;
     }
 
     return {
@@ -2805,31 +2820,48 @@ function canPrintModel(m) {
 }
 
 // Model usage calculation functions
+
+/**
+ * Calculates the total expected filament usage for a model
+ * @param {Object} model - The model with filament requirements
+ * @returns {number} Total expected filament weight in grams
+ */
 function calculateTotalExpectedUsage(model) {
+    // Return zero for models with no filament requirements
     if (!model.requirements || model.requirements.length === 0) {
         return 0;
     }
 
+    // Sum up expected weight for each requirement, accounting for quantity
     return model.requirements.reduce((total, req) => {
-        const expectedWeight = req.expectedWeight || 0;
-        const requiredCount = req.requiredCount || 1;
-        return total + (expectedWeight * requiredCount);
+        const expectedWeight = req.expectedWeight || 0; // Default to 0 if not specified
+        const requiredCount = req.requiredCount || 1;  // Default to 1 item if not specified
+        return total + (expectedWeight * requiredCount); // Total weight for this requirement
     }, 0);
 }
 
+/**
+ * Calculates the estimated material cost for printing a model
+ * @param {Object} model - The model with filament requirements and pricing info
+ * @returns {number} Total estimated cost in currency units
+ */
 function calculateModelCost(model) {
+    // Return zero for models with no filament requirements
     if (!model.requirements || model.requirements.length === 0) {
         return 0;
     }
 
     let totalCost = 0;
+
+    // Calculate cost for each filament requirement
     model.requirements.forEach(req => {
         const filament = filaments.find(f => f.id === req.filamentId);
         if (filament && filament.purchasePrice) {
-            // Calculate cost per gram from price per kg
+            // Convert price per kg to price per gram
             const pricePerGram = filament.purchasePrice / 1000;
             const expectedWeight = req.expectedWeight || 0;
             const requiredCount = req.requiredCount || 1;
+            // Add cost: weight × quantity × price per gram
             totalCost += pricePerGram * expectedWeight * requiredCount;
         }
     });
