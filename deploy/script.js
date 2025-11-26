@@ -3095,26 +3095,129 @@ function deletePrint(id) {
     }
 }
 
-function updatePrintSelects() {
-    const ms = document.getElementById('printModel');
-    if (ms) {
-        ms.innerHTML = '<option value="">Select Model</option>' +
-            models.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+// Model Search for Print Recording
+function setupPrintModelSearch() {
+    const searchInput = document.getElementById('printModel');
+    const resultsDiv = document.querySelector('.model-search-results');
 
-        // Remove existing listener to prevent duplicates
-        ms.onchange = null;
+    if (!searchInput || !resultsDiv) return;
 
-        // Add event listener for auto-populating filaments when model is selected
-        ms.onchange = function() {
-            const selectedModelName = this.value;
-            if (selectedModelName) {
-                populatePrintFilamentsFromModel(selectedModelName);
-            } else {
-                clearPrintFilaments();
+    let selectedIndex = -1;
+    let filteredModels = [];
+    let selecting = false;
+
+    // Setup search functionality
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        selectedIndex = -1;
+
+        if (query.length < 1) {
+            resultsDiv.style.display = 'none';
+            searchInput.removeAttribute('data-selected-model');
+            clearPrintFilaments();
+            return;
+        }
+
+        // Filter models based on search query
+        filteredModels = models.filter(model => {
+            return model.name.toLowerCase().includes(query) ||
+                   (model.category && model.category.toLowerCase().includes(query)) ||
+                   (model.difficulty && model.difficulty.toLowerCase().includes(query)) ||
+                   (model.notes && model.notes.toLowerCase().includes(query));
+        });
+
+        // Display results
+        displayModelSearchResults(filteredModels, query);
+    });
+
+    // Keyboard navigation
+    searchInput.addEventListener('keydown', function(e) {
+        const items = resultsDiv.querySelectorAll('.model-search-result-item');
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateModelSelection(items, selectedIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, -1);
+            updateModelSelection(items, selectedIndex);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedIndex >= 0 && items[selectedIndex]) {
+                selectModel(filteredModels[selectedIndex]);
+            } else if (filteredModels.length === 1) {
+                selectModel(filteredModels[0]);
             }
-        };
+        } else if (e.key === 'Escape') {
+            resultsDiv.style.display = 'none';
+        }
+    });
+
+    // Click outside to close
+    searchInput.addEventListener('blur', () => {
+        if (!selecting) setTimeout(() => resultsDiv.style.display = 'none', 200);
+    });
+
+    function displayModelSearchResults(modelList, query) {
+        if (modelList.length === 0) {
+            resultsDiv.innerHTML = '<div class="model-search-result-no-results">No models found</div>';
+        } else {
+            resultsDiv.innerHTML = modelList.map(model => {
+                const details = [];
+                if (model.category) details.push(model.category);
+                if (model.difficulty) details.push(model.difficulty);
+                if (model.requirements && model.requirements.length > 0) {
+                    details.push(`${model.requirements.length} filament${model.requirements.length > 1 ? 's' : ''}`);
+                }
+
+                return `
+                    <div class="model-search-result-item" data-model-id="${model.id}">
+                        <div class="model-search-result-name">${highlightSearchMatch(model.name, query)}</div>
+                        ${details.length > 0 ? `<div class="model-search-result-details">${details.join(' • ')}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Add click handlers
+            resultsDiv.querySelectorAll('.model-search-result-item').forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    selecting = true;
+                    selectModel(modelList[index]);
+                    setTimeout(() => selecting = false, 100);
+                });
+            });
+        }
+        resultsDiv.style.display = 'block';
     }
-    // Note: printColor dropdown removed - now using multi-filament selection
+
+    function updateModelSelection(items, index) {
+        items.forEach((item, i) => {
+            if (i === index) {
+                item.classList.add('highlight');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('highlight');
+            }
+        });
+    }
+
+    function selectModel(model) {
+        searchInput.value = model.name;
+        searchInput.setAttribute('data-selected-model', model.id);
+        resultsDiv.style.display = 'none';
+        populatePrintFilamentsFromModel(model.name);
+    }
+
+    function highlightSearchMatch(text, query) {
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.replace(regex, '<strong>$1</strong>');
+    }
+}
+
+function updatePrintSelects() {
+    // Setup the model search functionality
+    setupPrintModelSearch();
 }
 
 function populatePrintFilamentsFromModel(modelName) {

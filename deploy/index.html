@@ -294,9 +294,12 @@
                 <div class="section">
                     <h2>Record New Print</h2>
                     <div class="input-group">
-                        <select id="printModel"><option value="">Select Model</option></select>
-                        <input type="number" id="printWeight" placeholder="Total Weight Used (g)" min="0" step="0.1" readonly style="background: #f8f9fa; cursor: not-allowed;">
-                        <input type="date" id="printDate">
+                        <div class="model-search-container">
+                            <input type="text" id="printModel" placeholder="Search models..." class="model-search-input" title="Search for models by name, category, or difficulty">
+                            <div class="model-search-results"></div>
+                        </div>
+                        <input type="number" id="printWeight" placeholder="Total Weight Used (g)" min="0" step="0.1" readonly style="background: #f8f9fa; cursor: not-allowed;" title="Total weight calculated from individual filament weights">
+                        <input type="date" id="printDate" title="Print date (defaults to today)">
                     </div>
                     <div style="margin-top:15px;">
                         <label style="display:block;margin-bottom:10px;font-weight:600;color:#495057;">Filaments Used:</label>
