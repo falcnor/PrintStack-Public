@@ -34,7 +34,7 @@
                         <div class="material-types-management">
                             <div class="material-types-list" id="materialTypesList"></div>
                             <div class="material-types-add">
-                                <input type="text" id="newMaterialType" placeholder="New material type..." maxlength="50">
+                                <input type="text" id="newMaterialType" placeholder="New material type..." maxlength="50" title="Enter new material type (e.g., PETG, TPU)">
                                 <button onclick="handleAddMaterialType()">Add Type</button>
                             </div>
                         </div>
@@ -50,7 +50,7 @@
                             <div class="input-group">
                                     <div class="form-group">
                                         <label for="filamentBrand" id="filamentBrandLabel">Brand</label>
-                                        <input type="text" id="filamentBrand" name="brand" placeholder="Manufacturer (e.g., eSUN, Hatchbox)" required aria-required="true">
+                                        <input type="text" id="filamentBrand" name="brand" placeholder="Manufacturer (e.g., eSUN, Hatchbox)" required aria-required="true" title="Manufacturer (e.g., eSUN, Hatchbox)">
                                     </div>
                                     <div class="form-group">
                                         <label for="filamentMaterialType" id="filamentMaterialTypeLabel">Material Type</label>
@@ -62,11 +62,11 @@
                                             <option value="TPU">TPU</option>
                                             <option value="Other">Other (Custom)</option>
                                         </select>
-                                        <input type="text" id="filamentMaterialTypeCustom" name="materialTypeCustom" placeholder="Custom material type" aria-label="Custom material type" style="display: none;">
+                                        <input type="text" id="filamentMaterialTypeCustom" name="materialTypeCustom" placeholder="Custom material type" aria-label="Custom material type" style="display: none;" title="Custom material type">
                                     </div>
                                     <div class="form-group">
                                         <label for="filamentColor" id="filamentColorLabel">Color Name</label>
-                                        <input type="text" id="filamentColor" name="colorName" placeholder="Color description" required aria-required="true">
+                                        <input type="text" id="filamentColor" name="colorName" placeholder="Color description" required aria-required="true" title="Color description">
                                     </div>
                                     <div class="form-group">
                                         <label for="filamentColorHex" id="filamentColorHexLabel">Color Code</label>
@@ -86,11 +86,11 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="filamentLocation" id="filamentLocationLabel">Storage Location</label>
-                                        <input type="text" id="filamentLocation" name="location" placeholder="Storage location">
+                                        <input type="text" id="filamentLocation" name="location" placeholder="Storage location" title="Storage location">
                                     </div>
                                     <div class="form-group">
                                         <label for="filamentPurchasePrice" id="filamentPurchasePriceLabel">Purchase Price ($/kg)</label>
-                                        <input type="number" id="filamentPurchasePrice" name="purchasePrice" placeholder="Optional price per kg" min="0" step="0.01">
+                                        <input type="number" id="filamentPurchasePrice" name="purchasePrice" placeholder="Optional price per kg" min="0" step="0.01" title="Optional price per kilogram">
                                     </div>
                                     <div class="form-group">
                                         <label>
@@ -112,7 +112,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="filamentNotes" id="filamentNotesLabel">Notes</label>
-                                        <textarea id="filamentNotes" name="notes" rows="3" placeholder="Additional notes about this filament"></textarea>
+                                        <textarea id="filamentNotes" name="notes" rows="3" placeholder="Additional notes about this filament" title="Additional notes about this filament"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -181,22 +181,17 @@
                             <div class="input-group">
                                 <div class="form-group">
                                     <label for="modelName" id="modelNameLabel">Model Name</label>
-                                    <input type="text" id="modelName" name="modelName" placeholder="Model name" required aria-required="true">
+                                    <input type="text" id="modelName" name="modelName" placeholder="Model name" required aria-required="true" title="Enter the model name">
                                 </div>
                                 <div class="form-group">
                                     <label for="modelLink" id="modelLinkLabel">Source URL / Notes</label>
-                                    <input type="url" id="modelLink" name="modelLink" placeholder="https://example.com/model or notes">
+                                    <input type="url" id="modelLink" name="modelLink" placeholder="https://example.com/model or notes" title="Source URL or additional notes about the model">
                                 </div>
                                 <div class="form-group">
                                     <label for="modelCategory" id="modelCategoryLabel">Category</label>
                                     <select id="modelCategory" name="category" required aria-required="true">
                                         <option value="">Select Category...</option>
-                                        <option value="Functional">Functional</option>
-                                        <option value="Decoration">Decoration</option>
-                                        <option value="Tools">Tools</option>
-                                        <option value="Toys">Toys</option>
-                                        <option value="Art">Art</option>
-                                        <option value="Other">Other</option>
+                                        <!-- Categories will be populated dynamically -->
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -232,7 +227,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="modelNotes" id="modelNotesLabel">Printing Notes</label>
-                                    <textarea id="modelNotes" name="notes" rows="3" placeholder="Additional printing notes, tips, or observations"></textarea>
+                                    <textarea id="modelNotes" name="notes" rows="3" placeholder="Additional printing notes, tips, or observations" title="Additional printing notes, tips, or observations"></textarea>
                                 </div>
                             </div>
                             <div style="margin-bottom:15px;">
@@ -294,9 +289,12 @@
                 <div class="section">
                     <h2>Record New Print</h2>
                     <div class="input-group">
-                        <select id="printModel"><option value="">Select Model</option></select>
-                        <input type="number" id="printWeight" placeholder="Total Weight Used (g)" min="0" step="0.1" readonly style="background: #f8f9fa; cursor: not-allowed;">
-                        <input type="date" id="printDate">
+                        <div class="model-search-container">
+                            <input type="text" id="printModel" placeholder="Search models..." class="model-search-input" title="Search for models by name, category, or difficulty">
+                            <div class="model-search-results"></div>
+                        </div>
+                        <input type="number" id="printWeight" placeholder="Total Weight Used (g)" min="0" step="0.1" readonly style="background: #f8f9fa; cursor: not-allowed;" title="Total weight calculated from individual filament weights">
+                        <input type="date" id="printDate" title="Print date (defaults to today)">
                     </div>
                     <div style="margin-top:15px;">
                         <label style="display:block;margin-bottom:10px;font-weight:600;color:#495057;">Filaments Used:</label>
@@ -338,7 +336,7 @@
                 <div class="input-group">
                     <div class="form-group">
                         <label for="editFilamentBrand">Brand</label>
-                        <input type="text" id="editFilamentBrand" name="brand" placeholder="Manufacturer" required>
+                        <input type="text" id="editFilamentBrand" name="brand" placeholder="Manufacturer" required title="Manufacturer name">
                     </div>
                     <div class="form-group">
                         <label for="editFilamentMaterialType">Material Type</label>
@@ -353,14 +351,14 @@
                     </div>
                     <div class="form-group">
                         <label for="editFilamentColor">Color Name</label>
-                        <input type="text" id="editFilamentColor" name="colorName" placeholder="Color description" required>
+                        <input type="text" id="editFilamentColor" name="colorName" placeholder="Color description" required title="Color description">
                     </div>
                     <div class="form-group">
                         <label for="editFilamentColorHex">Color Code</label>
                         <div class="enhanced-color-input-wrapper">
                             <input type="text" id="editFilamentColorHex" name="colorHex" placeholder="#RRGGBB" value="#ff5733"
                                    class="enhanced-color-input" maxlength="7"
-                                   pattern="^#[0-9A-Fa-f]{6}$"
+                                   pattern="^#[0-9A-Fa-f]{6}$" title="Hex color code (e.g., #FF5733)"
                                    aria-label="Color hex code">
                             <div class="enhanced-color-swatch" id="editFilamentColorSwatch" style="background: #ff5733" data-hex="#FF5733"></div>
                             <button type="button" class="color-picker-btn" id="editFilamentColorPickerBtn" title="Open color picker">🎨</button>
@@ -375,15 +373,15 @@
                     </div>
                     <div class="form-group">
                         <label for="editFilamentWeight">Weight (g)</label>
-                        <input type="number" id="editFilamentWeight" name="weight" placeholder="Current weight" min="0" step="0.1" required>
+                        <input type="number" id="editFilamentWeight" name="weight" placeholder="Current weight" min="0" step="0.1" required title="Current weight in grams">
                     </div>
                     <div class="form-group">
                         <label for="editFilamentLocation">Storage Location</label>
-                        <input type="text" id="editFilamentLocation" name="location" placeholder="Storage location">
+                        <input type="text" id="editFilamentLocation" name="location" placeholder="Storage location" title="Storage location">
                     </div>
                     <div class="form-group">
                         <label for="editFilamentPurchasePrice">Purchase Price ($/kg)</label>
-                        <input type="number" id="editFilamentPurchasePrice" name="purchasePrice" placeholder="Optional price per kg" min="0" step="0.01">
+                        <input type="number" id="editFilamentPurchasePrice" name="purchasePrice" placeholder="Optional price per kg" min="0" step="0.01" title="Optional price per kilogram">
                     </div>
                     <div class="form-group">
                         <label>
@@ -406,7 +404,7 @@
                 </div>
                 <div class="form-group">
                     <label for="editFilamentNotes">Notes</label>
-                    <textarea id="editFilamentNotes" name="notes" rows="3" placeholder="Additional notes about this filament"></textarea>
+                    <textarea id="editFilamentNotes" name="notes" rows="3" placeholder="Additional notes about this filament" title="Additional notes about this filament"></textarea>
                 </div>
             </form>
             <div class="modal-buttons">
@@ -420,8 +418,8 @@
         <div class="modal-content">
             <div class="modal-header">Edit Model</div>
             <div class="input-group">
-                <input type="text" id="editModelName" placeholder="Model Name" required>
-                <input type="url" id="editModelLink" placeholder="Link/URL">
+                <input type="text" id="editModelName" placeholder="Model Name" required title="Enter the model name">
+                <input type="url" id="editModelLink" placeholder="Link/URL" title="Source URL or link">
             </div>
             <div class="input-group">
                 <select id="editModelCategory">
@@ -443,11 +441,11 @@
                 </select>
             </div>
             <div class="input-group">
-                <input type="number" id="editModelPrintTime" placeholder="Print Time (hours)" min="0.5" max="500" step="0.5">
-                <input type="number" id="editModelLayerHeight" placeholder="Layer Height (mm)" min="0.05" max="1.0" step="0.05">
+                <input type="number" id="editModelPrintTime" placeholder="Print Time (hours)" min="0.5" max="500" step="0.5" title="Estimated print time in hours">
+                <input type="number" id="editModelLayerHeight" placeholder="Layer Height (mm)" min="0.05" max="1.0" step="0.05" title="Recommended layer height in millimeters">
             </div>
             <div class="input-group">
-                <input type="number" id="editModelInfill" placeholder="Infill (%)" min="0" max="100" step="5">
+                <input type="number" id="editModelInfill" placeholder="Infill (%)" min="0" max="100" step="5" title="Recommended infill percentage">
                 <select id="editModelSupports">
                     <option value="false">No Supports</option>
                     <option value="true">Requires Supports</option>
@@ -477,7 +475,7 @@
             </div>
             <div class="add-category-form">
                 <div class="input-group">
-                    <input type="text" id="newCategoryName" placeholder="New category name..." aria-label="New category name">
+                    <input type="text" id="newCategoryName" placeholder="New category name..." aria-label="New category name" title="Enter new category name">
                     <button type="button" id="addCategoryBtn" onclick="addCategory()">Add</button>
                 </div>
             </div>
@@ -491,9 +489,9 @@
         <div class="modal-content">
             <div class="modal-header">Edit Print Record</div>
             <div class="input-group">
-                <input type="text" id="editPrintModel" placeholder="Model Name">
-                <input type="text" id="editPrintColor" placeholder="Color">
-                <input type="number" id="editPrintWeight" placeholder="Weight (g)" min="0" step="0.1">
+                <input type="text" id="editPrintModel" placeholder="Model Name" title="Enter the model name">
+                <input type="text" id="editPrintColor" placeholder="Color" title="Filament color used">
+                <input type="number" id="editPrintWeight" placeholder="Weight (g)" min="0" step="0.1" title="Weight of filament used in grams">
                 <input type="date" id="editPrintDate">
             </div>
             <div class="modal-buttons">

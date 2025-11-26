@@ -807,10 +807,10 @@ function createPrintFilamentSearchBox(selectedId = null, selectedWeight = null) 
     }
 
     div.innerHTML = `
-        <select class="print-filament-select" style="min-width: 300px;" onchange="updateTotalWeight()">
+        <select class="print-filament-select" style="min-width: 300px;" onchange="updateTotalWeight()" title="Select filament used for this print">
             ${filamentOptions}
         </select>
-        <input type="number" class="print-filament-weight" placeholder="Weight Used (g)" min="0" step="0.1" value="${weightDisplay}" style="width: 120px; margin-left: 10px;" onchange="updateTotalWeight()" oninput="updateTotalWeight()">
+        <input type="number" class="print-filament-weight" placeholder="Weight Used (g)" min="0" step="0.1" value="${weightDisplay}" style="width: 120px; margin-left: 10px;" onchange="updateTotalWeight()" oninput="updateTotalWeight()" title="Actual weight of filament used in grams">
         <button class="remove-btn" onclick="removePrintFilament(this)" title="Remove filament">✕</button>
     `;
 
@@ -2380,15 +2380,15 @@ function createFilamentSearchBox(selectedId = null, isEdit = false) {
 
     div.innerHTML = `
         <div class="search-container">
-            <input type="text" class="search-input req-search" placeholder="Search filaments..." value="${displayText}" data-selected-id="${selectedId || ''}" autocomplete="off">
+            <input type="text" class="search-input req-search" placeholder="Search filaments..." value="${displayText}" data-selected-id="${selectedId || ''}" autocomplete="off" title="Search for filaments by name, color, or material type">
             <div class="search-results"></div>
         </div>
         <div class="usage-fields">
-            <input type="number" class="expected-weight" placeholder="Expected weight (g)" min="0" step="0.1" value="${reqData?.expectedWeight || ''}" aria-label="Expected filament weight in grams">
-            <input type="number" class="tolerance" placeholder="Tolerance %" min="0" max="100" step="1" value="${reqData?.tolerance || ''}" aria-label="Usage tolerance percentage">
-            <input type="number" class="required-count" placeholder="Qty" min="1" value="${reqData?.requiredCount || 1}" aria-label="Number of items required">
+            <input type="number" class="expected-weight" placeholder="Expected weight (g)" min="0" step="0.1" value="${reqData?.expectedWeight || ''}" aria-label="Expected filament weight in grams" title="Expected filament weight in grams for this model">
+            <input type="number" class="tolerance" placeholder="Tolerance %" min="0" max="100" step="1" value="${reqData?.tolerance || ''}" aria-label="Usage tolerance percentage" title="Tolerance percentage for weight variance (e.g., 5 for ±5%)">
+            <input type="number" class="required-count" placeholder="Qty" min="1" value="${reqData?.requiredCount || 1}" aria-label="Number of items required" title="Number of times this filament is needed for the model">
         </div>
-        <button type="button" class="delete-btn" onclick="${removeFn}(this)">Remove</button>
+        <button type="button" class="delete-btn" onclick="${removeFn}(this)" title="Remove this filament requirement">Remove</button>
     `;
     
     const input = div.querySelector('.req-search');
@@ -3047,7 +3047,11 @@ function addPrint() {
     prints.push(print);
 
     // Clear form
+    document.getElementById('printModel').value = '';
+    document.getElementById('printModel').removeAttribute('data-selected-model');
+    document.querySelector('.model-search-results').style.display = 'none';
     document.getElementById('printWeight').value = '';
+    document.getElementById('printDate').value = '';
     const container = document.getElementById('printFilamentsContainer');
     container.innerHTML = '';
     addPrintFilament(); // Add back one empty filament field
@@ -3095,26 +3099,129 @@ function deletePrint(id) {
     }
 }
 
-function updatePrintSelects() {
-    const ms = document.getElementById('printModel');
-    if (ms) {
-        ms.innerHTML = '<option value="">Select Model</option>' +
-            models.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+// Model Search for Print Recording
+function setupPrintModelSearch() {
+    const searchInput = document.getElementById('printModel');
+    const resultsDiv = document.querySelector('.model-search-results');
 
-        // Remove existing listener to prevent duplicates
-        ms.onchange = null;
+    if (!searchInput || !resultsDiv) return;
 
-        // Add event listener for auto-populating filaments when model is selected
-        ms.onchange = function() {
-            const selectedModelName = this.value;
-            if (selectedModelName) {
-                populatePrintFilamentsFromModel(selectedModelName);
-            } else {
-                clearPrintFilaments();
+    let selectedIndex = -1;
+    let filteredModels = [];
+    let selecting = false;
+
+    // Setup search functionality
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        selectedIndex = -1;
+
+        if (query.length < 1) {
+            resultsDiv.style.display = 'none';
+            searchInput.removeAttribute('data-selected-model');
+            clearPrintFilaments();
+            return;
+        }
+
+        // Filter models based on search query
+        filteredModels = models.filter(model => {
+            return model.name.toLowerCase().includes(query) ||
+                   (model.category && model.category.toLowerCase().includes(query)) ||
+                   (model.difficulty && model.difficulty.toLowerCase().includes(query)) ||
+                   (model.notes && model.notes.toLowerCase().includes(query));
+        });
+
+        // Display results
+        displayModelSearchResults(filteredModels, query);
+    });
+
+    // Keyboard navigation
+    searchInput.addEventListener('keydown', function(e) {
+        const items = resultsDiv.querySelectorAll('.model-search-result-item');
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateModelSelection(items, selectedIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, -1);
+            updateModelSelection(items, selectedIndex);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedIndex >= 0 && items[selectedIndex]) {
+                selectModel(filteredModels[selectedIndex]);
+            } else if (filteredModels.length === 1) {
+                selectModel(filteredModels[0]);
             }
-        };
+        } else if (e.key === 'Escape') {
+            resultsDiv.style.display = 'none';
+        }
+    });
+
+    // Click outside to close
+    searchInput.addEventListener('blur', () => {
+        if (!selecting) setTimeout(() => resultsDiv.style.display = 'none', 200);
+    });
+
+    function displayModelSearchResults(modelList, query) {
+        if (modelList.length === 0) {
+            resultsDiv.innerHTML = '<div class="model-search-result-no-results">No models found</div>';
+        } else {
+            resultsDiv.innerHTML = modelList.map(model => {
+                const details = [];
+                if (model.category) details.push(model.category);
+                if (model.difficulty) details.push(model.difficulty);
+                if (model.requirements && model.requirements.length > 0) {
+                    details.push(`${model.requirements.length} filament${model.requirements.length > 1 ? 's' : ''}`);
+                }
+
+                return `
+                    <div class="model-search-result-item" data-model-id="${model.id}">
+                        <div class="model-search-result-name">${highlightSearchMatch(model.name, query)}</div>
+                        ${details.length > 0 ? `<div class="model-search-result-details">${details.join(' • ')}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Add click handlers
+            resultsDiv.querySelectorAll('.model-search-result-item').forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    selecting = true;
+                    selectModel(modelList[index]);
+                    setTimeout(() => selecting = false, 100);
+                });
+            });
+        }
+        resultsDiv.style.display = 'block';
     }
-    // Note: printColor dropdown removed - now using multi-filament selection
+
+    function updateModelSelection(items, index) {
+        items.forEach((item, i) => {
+            if (i === index) {
+                item.classList.add('highlight');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('highlight');
+            }
+        });
+    }
+
+    function selectModel(model) {
+        searchInput.value = model.name;
+        searchInput.setAttribute('data-selected-model', model.id);
+        resultsDiv.style.display = 'none';
+        populatePrintFilamentsFromModel(model.name);
+    }
+
+    function highlightSearchMatch(text, query) {
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.replace(regex, '<strong>$1</strong>');
+    }
+}
+
+function updatePrintSelects() {
+    // Setup the model search functionality
+    setupPrintModelSearch();
 }
 
 function populatePrintFilamentsFromModel(modelName) {
@@ -3418,6 +3525,7 @@ function applyFeatureFallbacks(features) {
             textInput.pattern = '^#[0-9A-Fa-f]{6}$';
             textInput.id = input.id;
             textInput.name = input.name;
+            textInput.title = 'Hex color code (e.g., #FF5733)';
 
             // Copy event listeners and attributes
             Array.from(input.attributes).forEach(attr => {
@@ -3468,13 +3576,13 @@ function addNoScriptFallbacks() {
             <h3>Basic Filament Entry (Limited Functionality)</h3>
             <p>This form allows basic data entry but lacks advanced features like validation, storage, and calculations.</p>
             <div style="margin-bottom: 10px;">
-                <label>Material: <input type="text" name="material" required></label>
+                <label>Material: <input type="text" name="material" required title="Enter filament material type (e.g., PLA, PETG)"></label>
             </div>
             <div style="margin-bottom: 10px;">
-                <label>Color: <input type="text" name="color" required></label>
+                <label>Color: <input type="text" name="color" required title="Enter filament color description"></label>
             </div>
             <div style="margin-bottom: 10px;">
-                <label>Weight (g): <input type="number" name="weight" required></label>
+                <label>Weight (g): <input type="number" name="weight" required title="Enter filament weight in grams"></label>
             </div>
             <button type="submit">Add Filament</button>
         </form>
@@ -3545,6 +3653,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup accessibility enhancements
     setupAccessibilityEnhancements();
+
+    // Set default print date to today
+    const printDateInput = document.getElementById('printDate');
+    if (printDateInput) {
+        printDateInput.value = new Date().toISOString().split('T')[0];
+    }
 
     // Only setup enhanced features if basic requirements are met
     if (features.localStorage && features.json) {
@@ -3807,6 +3921,7 @@ function editCategory(oldName) {
     input.type = 'text';
     input.value = currentName;
     input.className = 'category-edit-input';
+    input.title = 'Enter category name';
 
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'Save';
@@ -3971,20 +4086,24 @@ function getColorBrightness(hex) {
     return (r * 299 + g * 587 + b * 114) / 1000;
 }
 
-// Populate category dropdown in edit model form
+// Populate category dropdowns in both add and edit model forms
 function populateCategoryDropdown() {
-    const select = document.getElementById('editModelCategory');
-    if (!select) return;
+    const dropdowns = ['modelCategory', 'editModelCategory'];
 
-    // Clear existing options except the first one
-    select.innerHTML = '<option value="">Select Category...</option>';
+    dropdowns.forEach(dropdownId => {
+        const select = document.getElementById(dropdownId);
+        if (!select) return;
 
-    // Add categories from modelCategories array
-    modelCategories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category;
-        select.appendChild(option);
+        // Clear existing options except the first one
+        select.innerHTML = '<option value="">Select Category...</option>';
+
+        // Add categories from modelCategories array
+        modelCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            select.appendChild(option);
+        });
     });
 }
 
