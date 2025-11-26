@@ -6,6 +6,7 @@ let prints = [];
 let editingFilamentId = null;
 let editingModelId = null;
 let editingPrintId = null;
+let modelCategories = [];
 
 // Dynamic Material Types Management
 let materialTypes = ['PLA', 'PETG', 'ABS', 'TPU']; // Default material types
@@ -67,7 +68,6 @@ function loadMaterialTypes() {
         try {
             materialTypes = JSON.parse(saved);
         } catch (e) {
-            console.warn('Failed to load material types, using defaults');
         }
     }
 }
@@ -247,14 +247,14 @@ class EnhancedDataGrid {
 
         if (columnConfig.sortType === 'number') {
             this.visibleData.sort((a, b) => {
-                const aVal = this.getNestedValue(a, column.key) || 0;
-                const bVal = this.getNestedValue(b, column.key) || 0;
+                const aVal = this.getNestedValue(a, column) || 0;
+                const bVal = this.getNestedValue(b, column) || 0;
                 return ascending ? aVal - bVal : bVal - aVal;
             });
         } else {
             this.visibleData.sort((a, b) => {
-                const aVal = String(this.getNestedValue(a, column.key) || '').toLowerCase();
-                const bVal = String(this.getNestedValue(b, column.key) || '').toLowerCase();
+                const aVal = String(this.getNestedValue(a, column) || '').toLowerCase();
+                const bVal = String(this.getNestedValue(b, column) || '').toLowerCase();
                 const comparison = aVal.localeCompare(bVal);
                 return ascending ? comparison : -comparison;
             });
@@ -266,6 +266,9 @@ class EnhancedDataGrid {
     }
 
     getNestedValue(obj, key) {
+        if (!obj || !key || typeof key !== 'string') {
+            return undefined;
+        }
         return key.split('.').reduce((current, prop) => current && current[prop], obj);
     }
 
@@ -286,8 +289,7 @@ class EnhancedDataGrid {
         // Find the search input in the data grid controls
         const searchInput = document.getElementById(`${this.tableId}Search`);
         if (!searchInput) {
-            console.log(`Search input not found for ${this.tableId}`);
-            return;
+                return;
         }
 
         searchInput.addEventListener('input', (e) => {
@@ -357,26 +359,20 @@ class EnhancedDataGrid {
         const tbody = document.querySelector(`#${this.tableId} tbody`);
         if (!tbody) return;
 
-        console.log(`renderTable() called for table: ${this.tableId}, data count: ${this.visibleData.length}`);
-        console.log('rendering to tbody element:', tbody);
 
         // Debug the DOM tree
         let parent = tbody;
         let level = 0;
         while (parent && level < 10) {
-            console.log(`Level ${level}:`, parent, 'ID:', parent.id, 'Class:', parent.className);
             parent = parent.parentElement;
             level++;
         }
 
-        console.log('tbody page container:', tbody.closest('.page')?.id || 'no page parent');
-        console.log('data being rendered:', this.visibleData.slice(0, 3)); // Show first 3 items
 
         if (this.visibleData.length === 0) {
             // Show empty state message
             const colspan = document.querySelector(`#${this.tableId} th`)?.parentElement?.children?.length || 1;
             tbody.innerHTML = `<tr><td colspan="${colspan}" class="empty-state">No data available</td></tr>`;
-            console.log(`Set empty state for table: ${this.tableId}`);
             this.updateTableInfo();
             return;
         }
@@ -426,7 +422,6 @@ class EnhancedDataGrid {
         if (!paginationContainer) {
             const table = document.querySelector(`#${this.tableId}`);
             if (!table) {
-                console.error(`Table with id ${this.tableId} not found`);
                 return;
             }
 
@@ -436,7 +431,6 @@ class EnhancedDataGrid {
                            table.parentElement;
 
             if (!container) {
-                console.error(`Could not find container for table ${this.tableId}`);
                 return;
             }
 
@@ -585,7 +579,7 @@ class FilamentTable extends EnhancedDataGrid {
             '<span class="badge badge-error">Out of Stock</span>';
 
         const colorDisplay = `
-            <span class="color-swatch" style="background:${item.colorHex || '#ccc'}"></span>
+            <span class="color-swatch" style="background:${item.colorHex || '#ccc'}" data-hex="${item.colorHex || '#CCCCCC'}"></span>
             <span class="color-name">${item.colorName || item.color || 'Unknown'}</span>
         `;
 
@@ -611,6 +605,34 @@ class FilamentTable extends EnhancedDataGrid {
         } else {
             this.visibleData = this.originalData.filter(item => {
                 const searchableText = `${item.brand} ${item.materialType} ${item.material} ${item.colorName} ${item.color} ${item.location}`.toLowerCase();
+
+                // Check for mathematical operators for weight filtering
+                const weightMatch = query.match(/^(weight|weight:)([<>=]=?|=|!=)\s*(\d+(?:\.\d+)?)$/i);
+                if (weightMatch) {
+                    const [, field, operator, value] = weightMatch;
+                    const weight = parseFloat(value);
+                    const itemWeight = item.weight || 0;
+
+                    switch (operator) {
+                        case '<': return itemWeight < weight;
+                        case '<=': return itemWeight <= weight;
+                        case '>': return itemWeight > weight;
+                        case '>=': return itemWeight >= weight;
+                        case '=': case '==': return Math.abs(itemWeight - weight) < 0.01;
+                        case '!=': return Math.abs(itemWeight - weight) >= 0.01;
+                        default: return searchableText.includes(query);
+                    }
+                }
+
+                // Check for range queries like "weight:100-500"
+                const rangeMatch = query.match(/^(weight|weight:)(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/i);
+                if (rangeMatch) {
+                    const [, field, min, max] = rangeMatch;
+                    const itemWeight = item.weight || 0;
+                    return itemWeight >= parseFloat(min) && itemWeight <= parseFloat(max);
+                }
+
+                // Default text search
                 return searchableText.includes(query);
             });
         }
@@ -627,8 +649,12 @@ class ModelsTable extends EnhancedDataGrid {
     constructor() {
         super('modelTable', [], [
             { key: 'name', label: 'Model Name', sortType: 'text' },
-            { key: 'link', label: 'Link/Notes', sortType: 'text' },
+            { key: 'category', label: 'Category', sortType: 'text' },
+            { key: 'difficulty', label: 'Difficulty', sortType: 'text' },
             { key: 'requirements', label: 'Required Filaments', sortType: 'text' },
+            { key: 'printTime', label: 'Est. Time', sortType: 'number' },
+            { key: 'canPrint', label: 'Can Print?', sortType: 'text' },
+            { key: 'link', label: 'Link/Notes', sortType: 'text' },
             { key: 'actions', label: 'Actions', sortType: 'text' }
         ]);
     }
@@ -652,20 +678,58 @@ class ModelsTable extends EnhancedDataGrid {
 
     renderRow(item) {
         const requirementsDisplay = (item.requirements && item.requirements.length > 0) ?
-            item.requirements.map(req => `
-                <span class="filament-req">${req.color} (${req.material})</span>
-            `).join('') : '<span class="text-muted">No filaments specified</span>';
+            item.requirements.map(req => {
+                const expectedWeight = req.expectedWeight ? `${req.expectedWeight}g` : 'N/A';
+                const tolerance = req.tolerance ? `±${req.tolerance}%` : '±10%';
+                return `
+                    <div class="filament-req-enhanced">
+                        <div class="req-primary">
+                            <span class="req-color">${req.color} (${req.material})</span>
+                            <span class="req-weight">${expectedWeight}</span>
+                        </div>
+                        <div class="req-secondary">
+                            <span class="req-tolerance">${tolerance}</span>
+                            ${req.requiredCount > 1 ? `<span class="req-quantity">×${req.requiredCount}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<span class="text-muted">No filaments specified</span>';
+
+        const categoryDisplay = item.category ?
+            `<span class="model-category">${item.category}</span>` :
+            '<span class="text-muted">Unknown</span>';
+
+        const difficultyClass = item.difficulty ? `difficulty-${item.difficulty.toLowerCase()}` : '';
+        const difficultyDisplay = item.difficulty ?
+            `<span class="model-difficulty ${difficultyClass}">${item.difficulty}</span>` :
+            '<span class="text-muted">Unknown</span>';
+
+        const printTimeDisplay = item.printTime ?
+            `<span class="print-time">${item.printTime}m</span>` :
+            '<span class="text-muted">N/A</span>';
+
+        // Check if model can be printed based on filament availability
+        const canPrint = canPrintModel(item);
+        const canPrintDisplay = canPrint.canPrint ?
+            `<span class="badge badge-success" title="Can print ${canPrint.canPrintCount > 1 ? `${canPrint.canPrintCount} times` : 'once'}">✓ ${canPrint.canPrintCount > 1 ? `(${canPrint.canPrintCount})` : ''}</span>` :
+            '<span class="badge badge-error" title="Cannot print - insufficient filament">✗</span>';
 
         return `
             <tr data-id="${item.id}">
                 <td data-sortable="name">${item.name || 'Unknown'}</td>
+                <td data-sortable="category">${categoryDisplay}</td>
+                <td data-sortable="difficulty">${difficultyDisplay}</td>
+                <td data-sortable="requirements">${requirementsDisplay}</td>
+                <td data-sortable="printTime">${printTimeDisplay}</td>
+                <td data-sortable="canPrint">${canPrintDisplay}</td>
                 <td data-sortable="link">
                     ${item.link ?
-                        `<a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.link}</a>` :
-                        '<span class="text-muted">No link</span>'
+                        `<a href="${item.link}" target="_blank" rel="noopener noreferrer" title="${item.link}">
+                            <span class="link-preview">🔗</span>
+                        </a>` :
+                        '<span class="text-muted" title="No link">—</span>'
                     }
                 </td>
-                <td data-sortable="requirements">${requirementsDisplay}</td>
                 <td data-sortable="actions" class="actions">
                     <button onclick="editModel(${item.id})" aria-label="Edit ${item.name || 'Unknown'} model" class="btn-icon">✏️</button>
                     <button onclick="deleteModel(${item.id})" aria-label="Delete ${item.name || 'Unknown'} model" class="btn-icon btn-danger">🗑️</button>
@@ -679,7 +743,7 @@ class ModelsTable extends EnhancedDataGrid {
             this.visibleData = [...this.originalData];
         } else {
             this.visibleData = this.originalData.filter(item => {
-                const searchableText = `${item.name} ${item.link || ''}`.toLowerCase();
+                const searchableText = `${item.name} ${item.category || ''} ${item.difficulty || ''} ${item.requirements || ''} ${item.notes || ''} ${item.tags ? item.tags.join(' ') : ''} ${item.link || ''}`.toLowerCase();
                 return searchableText.includes(query);
             });
         }
@@ -721,7 +785,6 @@ function removePrintFilament(btn) {
             updateTotalWeight(); // Recalculate total weight after removal
         }
     } catch (error) {
-        console.error('Error removing print filament:', error);
         showErrorMessage('Error removing filament');
     }
 }
@@ -1024,8 +1087,6 @@ function validateForm(formElement, options = {}) {
     const errors = {};
     let firstErrorField = null;
 
-    console.log('=== DEBUG VALIDATE FORM ===');
-    console.log('Form ID:', formElement.id);
 
     // Get all form inputs
     const inputs = formElement.querySelectorAll('input, select, textarea');
@@ -1064,21 +1125,15 @@ function validateForm(formElement, options = {}) {
             };
         }
 
-        if (fieldName === 'diameter') {
-            console.log('Processing diameter field:', {
-                fieldName,
-                originalValue: input.value,
-                processedValue: value,
-                fieldType: input.type,
-                hasValidationRule: !!ValidationRules[fieldName]
-            });
-        }
+        const options = {
+            fieldName,
+            originalValue: input.value,
+            processedValue: value,
+            fieldType: input.type,
+            hasValidationRule: !!ValidationRules[fieldName]
+        };
 
         const validation = validateField(fieldName, value, options);
-
-        if (fieldName === 'diameter') {
-            console.log('Diameter validation result:', validation);
-        }
 
         if (!validation.valid) {
             errors[fieldName] = validation.message;
@@ -1091,8 +1146,6 @@ function validateForm(formElement, options = {}) {
         }
     });
 
-    console.log('Final form validation errors:', errors);
-    console.log('=== END DEBUG VALIDATE FORM ===');
 
     // Focus first error field for accessibility
     if (firstErrorField && options.focusFirstError !== false) {
@@ -1467,46 +1520,37 @@ function showFieldFeedback(fieldElement, feedbackType, message) {
 
 // Navigation
 function showPage(pageName) {
-    console.log('switching to page:', pageName);
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const targetPage = document.getElementById(pageName + '-page');
     const targetNav = document.querySelector(`.nav-item[data-page="${pageName}"]`);
     if (targetPage) {
         targetPage.classList.add('active');
-        console.log('page found and activated:', pageName + '-page');
     } else {
-        console.error('page not found:', pageName + '-page');
     }
     if (targetNav) {
         targetNav.classList.add('active');
     } else {
-        console.error('nav not found:', pageName);
     }
 }
 
 // DOM Structure Fix
 function fixPageStructure() {
-    console.log('Checking and fixing page structure...');
 
     const filamentPage = document.getElementById('filament-page');
     const container = document.querySelector('.container');
 
     if (!filamentPage || !container) {
-        console.log('filament-page or container not found');
         return;
     }
 
     // Debug: Check where the Add Filament button is
     const addFilamentBtn = document.getElementById('addFilamentBtn');
     if (addFilamentBtn) {
-        console.log('Add Filament button found, checking its location:');
-        console.log('Button element:', addFilamentBtn);
 
         let parent = addFilamentBtn;
         let level = 0;
         while (parent && level < 10) {
-            console.log(`Level ${level}:`, parent, 'ID:', parent.id, 'Class:', parent.className);
             parent = parent.parentElement;
             level++;
         }
@@ -1514,12 +1558,10 @@ function fixPageStructure() {
         // Check if button is inside the collapsible section
         const addFilamentSection = document.getElementById('addFilamentSection');
         if (addFilamentSection && !addFilamentBtn.closest('#addFilamentSection')) {
-            console.log('Add Filament button is outside its collapsible section - this needs fixing!');
 
             // Find the form-actions div that contains the button
             const formActions = addFilamentBtn.closest('.form-actions');
             if (formActions) {
-                console.log('Moving form-actions back into addFilamentSection');
                 addFilamentSection.appendChild(formActions);
             }
         }
@@ -1544,7 +1586,6 @@ function fixPageStructure() {
                 current.querySelector('#filamentTableSearch') ||
                 current.querySelector('#duplicateWarning')) {
 
-                console.log('Found misplaced element:', current.id || current.className);
                 misplacedElements.push(current);
             }
         } else if (current.classList.contains('page') && current.id !== 'filament-page') {
@@ -1557,15 +1598,12 @@ function fixPageStructure() {
 
     // Move all misplaced elements into the filament page
     if (misplacedElements.length > 0) {
-        console.log('Moving', misplacedElements.length, 'elements back to filament-page');
 
         misplacedElements.forEach(element => {
             filamentPage.appendChild(element);
-            console.log('Moved element back to filament-page:', element.id || element.className);
         });
     }
 
-    console.log('Page structure check completed');
 }
 
 // Utility Functions
@@ -1639,16 +1677,27 @@ function loadData() {
         }
         const p = localStorage.getItem('prints');
         if (p) prints = JSON.parse(p);
-    } catch (e) { console.error('Error loading data:', e); }
     ensureFilamentIds();
     updateAllTables();
+    } catch (e) {
+        // Fallback to basic data loading if there's an error
+        const fallbackFilaments = localStorage.getItem('filaments');
+        const fallbackModels = localStorage.getItem('models');
+        const fallbackPrints = localStorage.getItem('prints');
+
+        if (fallbackFilaments) filaments = JSON.parse(fallbackFilaments);
+        if (fallbackModels) models = JSON.parse(fallbackModels);
+        if (fallbackPrints) prints = JSON.parse(fallbackPrints);
+
+        ensureFilamentIds();
+        updateAllTables();
+    }
 }
 
 function saveData() {
     try {
         // Validate data structure before saving
         if (!validateFilamentData()) {
-            console.error('Filament data validation failed, not saving');
             return false;
         }
 
@@ -1671,7 +1720,6 @@ function saveData() {
 
         return true;
     } catch (error) {
-        console.error('Error saving data:', error);
         AccessibilityNotifications.announceError('Save Data', 'Failed to save data to local storage');
         return false;
     }
@@ -1681,48 +1729,38 @@ function validateFilamentData() {
     return filaments.every(f => {
         // Required fields for enhanced filament data
         if (!f.brand || typeof f.brand !== 'string' || f.brand.trim() === '') {
-            console.error('Invalid filament: missing brand', f);
             return false;
         }
         if (!f.materialType || typeof f.materialType !== 'string' || f.materialType.trim() === '') {
-            console.error('Invalid filament: missing materialType', f);
             return false;
         }
         if (!f.color || typeof f.color !== 'string' || f.color.trim() === '') {
-            console.error('Invalid filament: missing color', f);
             return false;
         }
         if (!f.colorHex || typeof f.colorHex !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(f.colorHex)) {
-            console.error('Invalid filament: invalid colorHex', f);
             return false;
         }
         if (!f.weight || typeof f.weight !== 'number' || f.weight <= 0) {
-            console.error('Invalid filament: invalid weight', f);
             return false;
         }
         if (!f.diameter || ![1.75, 2.85].includes(f.diameter)) {
-            console.error('Invalid filament: invalid diameter', f);
             return false;
         }
 
         // Validate optional fields
         if (f.purchasePrice && (typeof f.purchasePrice !== 'number' || f.purchasePrice < 0)) {
-            console.error('Invalid filament: invalid purchasePrice', f);
             return false;
         }
 
         if (f.temperature) {
             const temp = f.temperature;
             if (temp.min && (typeof temp.min !== 'number' || temp.min < 150 || temp.min > 350)) {
-                console.error('Invalid filament: invalid temperature min', f);
                 return false;
             }
             if (temp.max && (typeof temp.max !== 'number' || temp.max < 150 || temp.max > 350)) {
-                console.error('Invalid filament: invalid temperature max', f);
                 return false;
             }
             if (temp.min && temp.max && temp.min >= temp.max) {
-                console.error('Invalid filament: temperature range invalid', f);
                 return false;
             }
         }
@@ -1818,7 +1856,6 @@ function exportData() {
         AccessibilityNotifications.announceSuccess('Data exported successfully');
 
     } catch (error) {
-        console.error('Export failed:', error);
         AccessibilityNotifications.announceError('Export', 'Failed to export data');
     }
 }
@@ -1940,7 +1977,6 @@ function handleImport(e) {
             }
 
         } catch (error) {
-            console.error('Import failed:', error);
             AccessibilityNotifications.announceError('Import', `Invalid data format: ${error.message}`);
         }
     };
@@ -1984,7 +2020,6 @@ function addFilament() {
         AccessibilityNotifications.announceSuccess(`${filamentData.brand} ${filamentData.materialType} filament added successfully`);
 
     } catch (error) {
-        console.error('Error adding filament:', error);
         AccessibilityNotifications.announceError('Add Filament', 'An unexpected error occurred');
     } finally {
         showLoadingState(submitButton, false);
@@ -2127,7 +2162,6 @@ function saveEditFilament() {
     // Validate the actual form
     const validation = validateForm(editForm);
     if (!validation.valid) {
-        console.log('Validation errors:', validation); // Debug line
         showErrorMessage(`Validation failed: ${Object.values(validation.errors).join(', ')}`);
 
         // Clear any existing field errors
@@ -2139,13 +2173,10 @@ function saveEditFilament() {
 
         // Show specific validation errors
         Object.entries(validation.errors).forEach(([fieldName, message]) => {
-            console.log(`Looking for field: ${fieldName}`); // Debug line
             const field = editForm.querySelector(`[name="${fieldName}"]`);
-            console.log(`Found field:`, field); // Debug line
             if (field) {
                 showFieldError(field, message);
             } else {
-                console.warn(`Field not found for validation: ${fieldName}`); // Debug line
             }
         });
 
@@ -2196,7 +2227,6 @@ function saveEditFilament() {
         AccessibilityNotifications.announceSuccess('Filament updated successfully');
 
     } catch (error) {
-        console.error('Error saving filament:', error);
         showErrorMessage('Failed to save filament changes');
         return false;
     }
@@ -2303,7 +2333,6 @@ function updateFilamentTable() {
 function setupFilamentSearch() {
     // Search functionality is now handled by the enhanced data grid
     // This function is kept for compatibility but no longer needed
-    console.log('Filament search is now handled by the enhanced data grid');
 }
 // Filament Search Box for Models
 function createFilamentSearchBox(selectedId = null, isEdit = false) {
@@ -2337,10 +2366,27 @@ function createFilamentSearchBox(selectedId = null, isEdit = false) {
 
     const removeFn = isEdit ? 'removeEditFilamentRequirement' : 'removeFilamentRequirement';
     
+    // Get requirement data if this is an edit or creating with existing data
+    let reqData = null;
+    if (selectedId && isEdit) {
+        // This is edit mode, find the requirement data
+        for (const model of models) {
+            if (model.requirements) {
+                reqData = model.requirements.find(r => r.filamentId === selectedId);
+                if (reqData) break;
+            }
+        }
+    }
+
     div.innerHTML = `
         <div class="search-container">
             <input type="text" class="search-input req-search" placeholder="Search filaments..." value="${displayText}" data-selected-id="${selectedId || ''}" autocomplete="off">
             <div class="search-results"></div>
+        </div>
+        <div class="usage-fields">
+            <input type="number" class="expected-weight" placeholder="Expected weight (g)" min="0" step="0.1" value="${reqData?.expectedWeight || ''}" aria-label="Expected filament weight in grams">
+            <input type="number" class="tolerance" placeholder="Tolerance %" min="0" max="100" step="1" value="${reqData?.tolerance || ''}" aria-label="Usage tolerance percentage">
+            <input type="number" class="required-count" placeholder="Qty" min="1" value="${reqData?.requiredCount || 1}" aria-label="Number of items required">
         </div>
         <button type="button" class="delete-btn" onclick="${removeFn}(this)">Remove</button>
     `;
@@ -2360,7 +2406,7 @@ function createFilamentSearchBox(selectedId = null, isEdit = false) {
         
         resultsDiv.innerHTML = filtered.length ? filtered.map(f => `
             <div class="search-result-item" data-filament-id="${f.id}">
-                <span class="color-swatch" style="background:${f.colorHex || '#ccc'}"></span>
+                <span class="color-swatch" style="background:${f.colorHex || '#ccc'}" data-hex="${f.colorHex || '#CCCCCC'}"></span>
                 <span>${f.colorName || f.color} (${f.materialType || f.material})</span>
                 ${!f.inStock ? '<span class="badge badge-error">Out of Stock</span>' : ''}
             </div>`).join('') : '<div class="no-results">No filaments found</div>';
@@ -2408,44 +2454,179 @@ function removeEditFilamentRequirement(btn) {
 
 // Model Functions
 function addModel() {
+    // Enhanced model validation and creation
     const name = document.getElementById('modelName').value.trim();
     const link = document.getElementById('modelLink').value.trim();
-    if (!name) return alert('Model name required');
-    
+    const category = document.getElementById('modelCategory').value;
+    const difficulty = document.getElementById('modelDifficulty').value;
+    const printTime = parseFloat(document.getElementById('modelPrintTime').value) || null;
+    const layerHeight = parseFloat(document.getElementById('modelLayerHeight').value) || null;
+    const infill = parseInt(document.getElementById('modelInfill').value) || null;
+    const supportsRequired = document.getElementById('modelSupports').value === 'true';
+    const notes = document.getElementById('modelNotes').value.trim();
+
+    // Validation for enhanced fields
+    if (!name) {
+        alert('Model name is required');
+        return;
+    }
+
+    if (!category) {
+        alert('Please select a category');
+        return;
+    }
+
+    if (!difficulty) {
+        alert('Please select a difficulty level');
+        return;
+    }
+
+    // Validate print time if provided
+    if (printTime !== null && (printTime < 0 || printTime > 1440)) {
+        alert('Print time must be between 0 and 1440 minutes (24 hours)');
+        return;
+    }
+
+    // Validate layer height if provided
+    if (layerHeight !== null && (layerHeight < 0.05 || layerHeight > 1.0)) {
+        alert('Layer height must be between 0.05mm and 1.0mm');
+        return;
+    }
+
+    // Validate infill if provided
+    if (infill !== null && (infill < 0 || infill > 100)) {
+        alert('Infill must be between 0% and 100%');
+        return;
+    }
+
+    // Get filament requirements with enhanced usage data
     const requirements = [];
-    document.querySelectorAll('#requiredFilamentsContainer .req-search').forEach(inp => {
-        const id = parseInt(inp.dataset.selectedId, 10);
+    let hasValidationError = false;
+    document.querySelectorAll('#requiredFilamentsContainer .filament-req-item').forEach(item => {
+        const searchInput = item.querySelector('.req-search');
+        const expectedWeightInput = item.querySelector('.expected-weight');
+        const toleranceInput = item.querySelector('.tolerance');
+        const requiredCountInput = item.querySelector('.required-count');
+
+        const id = parseInt(searchInput.dataset.selectedId, 10);
         if (!isNaN(id) && id > 0) {
             const f = filaments.find(x => x.id === id);
-            if (f) requirements.push({ filamentId: id, color: f.color, material: f.material });
+            if (f) {
+                // Validate expected weight is provided
+                const expectedWeight = parseFloat(expectedWeightInput.value);
+                if (isNaN(expectedWeight) || expectedWeight <= 0) {
+                    alert('Please provide a valid expected weight for each filament');
+                    hasValidationError = true;
+                    return;
+                }
+
+                // Validate tolerance if provided
+                const tolerance = parseFloat(toleranceInput.value);
+                if (toleranceInput.value && !isNaN(tolerance) && (tolerance < 0 || tolerance > 100)) {
+                    alert(`Tolerance for ${f.colorName || f.color} must be between 0% and 100%`);
+                    hasValidationError = true;
+                    return;
+                }
+
+                // Validate required count if provided
+                const requiredCount = parseInt(requiredCountInput.value);
+                if (requiredCountInput.value && (isNaN(requiredCount) || requiredCount < 1 || requiredCount > 100)) {
+                    alert(`Quantity for ${f.colorName || f.color} must be between 1 and 100`);
+                    hasValidationError = true;
+                    return;
+                }
+
+                requirements.push({
+                    filamentId: id,
+                    brand: f.brand,
+                    material: f.materialType || f.material,
+                    color: f.colorName || f.color,
+                    expectedWeight: expectedWeight,
+                    tolerance: !isNaN(tolerance) ? tolerance : 10, // Default 10% tolerance
+                    requiredCount: !isNaN(requiredCount) ? requiredCount : 1
+                });
+            }
         }
     });
-    
-    if (requirements.length === 0) return alert('Please select at least one filament from the dropdown');
-    
-    models.push({ id: Date.now(), name, requirements, link });
+
+    if (hasValidationError) {
+        return;
+    }
+
+    if (requirements.length === 0) {
+        alert('Please select at least one filament from the dropdown');
+        return;
+    }
+
+    // Create enhanced model object
+    const newModel = {
+        id: Date.now(),
+        name,
+        requirements,
+        link,
+        category,
+        difficulty,
+        printTime,
+        layerHeight,
+        infill,
+        supportsRequired,
+        notes,
+        addedDate: new Date().toISOString().split('T')[0],
+        tags: extractTagsFromNotes(notes)
+    };
+
+    models.push(newModel);
+
+    // Clear form
     document.getElementById('modelName').value = '';
     document.getElementById('modelLink').value = '';
+    document.getElementById('modelCategory').value = '';
+    document.getElementById('modelDifficulty').value = '';
+    document.getElementById('modelPrintTime').value = '';
+    document.getElementById('modelLayerHeight').value = '';
+    document.getElementById('modelInfill').value = '';
+    document.getElementById('modelSupports').value = 'false';
+    document.getElementById('modelNotes').value = '';
     document.getElementById('requiredFilamentsContainer').innerHTML = '';
     addFilamentRequirement();
+
     saveData();
     updateAllTables();
+
+    // Show success message
+    showSuccessMessage(`Model "${name}" added successfully!`);
+}
+
+// Helper function to extract tags from notes (simple implementation)
+function extractTagsFromNotes(notes) {
+    if (!notes) return [];
+
+    // Look for hashtags in notes
+    const tags = notes.match(/#\w+/g) || [];
+    return tags.map(tag => tag.substring(1)); // Remove # symbol
 }
 
 function editModel(id) {
     const m = models.find(x => x.id === id);
     if (!m) return;
-    
+
     editingModelId = id;
     document.getElementById('editModelName').value = m.name;
     document.getElementById('editModelLink').value = m.link || '';
-    
+    document.getElementById('editModelCategory').value = m.category || '';
+    document.getElementById('editModelDifficulty').value = m.difficulty || '';
+    document.getElementById('editModelPrintTime').value = m.printTime || '';
+    document.getElementById('editModelLayerHeight').value = m.layerHeight || '';
+    document.getElementById('editModelInfill').value = m.infill || '';
+    document.getElementById('editModelSupports').value = m.supportsRequired ? 'true' : 'false';
+    document.getElementById('editModelNotes').value = m.notes || '';
+
     const container = document.getElementById('editRequiredFilamentsContainer');
     container.innerHTML = '';
     (m.requirements || []).forEach(req => {
         container.appendChild(createFilamentSearchBox(req.filamentId, true));
     });
-    
+
     document.getElementById('editModelModal').style.display = 'block';
 }
 
@@ -2457,44 +2638,259 @@ function closeEditModelModal() {
 function saveEditModel() {
     const m = models.find(x => x.id === editingModelId);
     if (!m) return;
-    
+
     m.name = document.getElementById('editModelName').value.trim();
     m.link = document.getElementById('editModelLink').value.trim();
-    m.requirements = [];
-    
-    document.querySelectorAll('#editRequiredFilamentsContainer .req-search').forEach(inp => {
-        const id = parseInt(inp.dataset.selectedId, 10);
+    m.category = document.getElementById('editModelCategory').value;
+    m.difficulty = document.getElementById('editModelDifficulty').value;
+    m.printTime = parseFloat(document.getElementById('editModelPrintTime').value) || '';
+    m.layerHeight = parseFloat(document.getElementById('editModelLayerHeight').value) || '';
+    m.infill = parseInt(document.getElementById('editModelInfill').value) || '';
+    m.supportsRequired = document.getElementById('editModelSupports').value === 'true';
+    m.notes = document.getElementById('editModelNotes').value.trim();
+    m.tags = extractTagsFromNotes(m.notes);
+    // Get updated requirements with enhanced usage data
+    const requirements = [];
+    let hasValidationError = false;
+    document.querySelectorAll('#editRequiredFilamentsContainer .filament-req-item').forEach(item => {
+        const searchInput = item.querySelector('.req-search');
+        const expectedWeightInput = item.querySelector('.expected-weight');
+        const toleranceInput = item.querySelector('.tolerance');
+        const requiredCountInput = item.querySelector('.required-count');
+
+        const id = parseInt(searchInput.dataset.selectedId, 10);
         if (!isNaN(id) && id > 0) {
             const f = filaments.find(x => x.id === id);
-            if (f) m.requirements.push({ filamentId: id, color: f.colorName || f.color, material: f.materialType || f.material });
+            if (f) {
+                // Validate expected weight is provided
+                const expectedWeight = parseFloat(expectedWeightInput.value);
+                if (isNaN(expectedWeight) || expectedWeight <= 0) {
+                    alert('Please provide a valid expected weight for each filament');
+                    hasValidationError = true;
+                    return;
+                }
+
+                // Validate tolerance if provided
+                const tolerance = parseFloat(toleranceInput.value);
+                if (toleranceInput.value && !isNaN(tolerance) && (tolerance < 0 || tolerance > 100)) {
+                    alert(`Tolerance for ${f.colorName || f.color} must be between 0% and 100%`);
+                    hasValidationError = true;
+                    return;
+                }
+
+                // Validate required count if provided
+                const requiredCount = parseInt(requiredCountInput.value);
+                if (requiredCountInput.value && (isNaN(requiredCount) || requiredCount < 1 || requiredCount > 100)) {
+                    alert(`Quantity for ${f.colorName || f.color} must be between 1 and 100`);
+                    hasValidationError = true;
+                    return;
+                }
+
+                requirements.push({
+                    filamentId: id,
+                    brand: f.brand,
+                    material: f.materialType || f.material,
+                    color: f.colorName || f.color,
+                    expectedWeight: expectedWeight,
+                    tolerance: !isNaN(tolerance) ? tolerance : 10, // Default 10% tolerance
+                    requiredCount: !isNaN(requiredCount) ? requiredCount : 1
+                });
+            }
         }
     });
-    
+
+    if (hasValidationError) {
+        return;
+    }
+
+    m.requirements = requirements;
+
     if (!m.requirements.length) return alert('At least one filament required');
-    
+
     saveData();
     updateAllTables();
     closeEditModelModal();
 }
 
 function deleteModel(id) {
-    if (confirm('Delete model?')) {
+    const model = models.find(m => m.id === id);
+    if (!model) return;
+
+    // Check if model has print history
+    const modelPrints = prints.filter(p => p.modelId === id);
+
+    let confirmMessage = `Delete model "${model.name}"?`;
+    let relationshipWarnings = [];
+
+    if (modelPrints.length > 0) {
+        relationshipWarnings.push(`• Has ${modelPrints.length} print record${modelPrints.length !== 1 ? 's' : ''} (${modelPrints.map(p => new Date(p.date).toLocaleDateString()).join(', ')})`);
+    }
+
+    // Check if model is the only one using certain filaments
+    const uniqueFilaments = [];
+    model.requirements?.forEach(req => {
+        const otherModels = models.filter(m => m.id !== id && m.requirements?.some(r => r.filamentId === req.filamentId));
+        if (otherModels.length === 0) {
+            const filament = filaments.find(f => f.id === req.filamentId);
+            if (filament) {
+                uniqueFilaments.push(`• ${filament.colorName || filament.color} (${filament.materialType || filament.material})`);
+            }
+        }
+    });
+
+    if (uniqueFilaments.length > 0) {
+        relationshipWarnings.push(`• Only model using these filaments:\n${uniqueFilaments.join('\n')}`);
+    }
+
+    if (relationshipWarnings.length > 0) {
+        confirmMessage += '\n\n⚠️ Related data will be preserved:\n' + relationshipWarnings.join('\n') + '\n\nContinue with deletion?';
+    }
+
+    if (confirm(confirmMessage)) {
         models = models.filter(m => m.id !== id);
+
+        // Print history is preserved but will show "Model not found" in display
         saveData();
         updateAllTables();
+
+        // Show success message with additional info if there were relationships
+        if (relationshipWarnings.length > 0) {
+        }
     }
 }
 
 function canPrintModel(m) {
     if (!m.requirements || m.requirements.length === 0) {
-        return { canPrint: false, missingRequirements: ['None defined'] };
+        return { canPrint: false, missingRequirements: ['None defined'], availableFilaments: [], canPrintCount: 0 };
     }
-    
-    const missing = m.requirements
-        .filter(r => !filaments.some(f => f.id === r.filamentId && f.inStock))
-        .map(r => `${r.color} (${r.material})`);
-    
-    return { canPrint: missing.length === 0, missingRequirements: missing };
+
+    const missing = [];
+    const availableFilaments = [];
+    let maxCanPrintCount = Infinity; // Maximum number of times this model can be printed based on available filament
+
+    m.requirements.forEach(req => {
+        const filament = filaments.find(f => f.id === req.filamentId);
+        if (!filament || !filament.inStock) {
+            missing.push(`${req.color} (${req.material}) - ${filament ? 'Out of Stock' : 'Missing'}`);
+            maxCanPrintCount = 0;
+        } else {
+            availableFilaments.push({
+                filament: filament,
+                requirement: req,
+                weightPerPrint: req.expectedWeight || 0,
+                tolerance: req.tolerance || 10
+            });
+
+            // Calculate how many times we can print this model based on available filament
+            if (req.expectedWeight && req.expectedWeight > 0) {
+                const canPrintCount = Math.floor(filament.weight / req.expectedWeight);
+                // Account for required count per print
+                const actualCount = Math.floor(canPrintCount / (req.requiredCount || 1));
+                maxCanPrintCount = Math.min(maxCanPrintCount, actualCount);
+            }
+        }
+    });
+
+    // If any required weight is not provided or invalid, we can't determine print count
+    if (maxCanPrintCount === Infinity) {
+        maxCanPrintCount = missing.length === 0 ? 1 : 0; // Basic check - if all in stock, can print at least once
+    }
+
+    return {
+        canPrint: missing.length === 0,
+        missingRequirements: missing,
+        availableFilaments: availableFilaments,
+        canPrintCount: Math.max(0, maxCanPrintCount)
+    };
+}
+
+// Model usage calculation functions
+function calculateTotalExpectedUsage(model) {
+    if (!model.requirements || model.requirements.length === 0) {
+        return 0;
+    }
+
+    return model.requirements.reduce((total, req) => {
+        const expectedWeight = req.expectedWeight || 0;
+        const requiredCount = req.requiredCount || 1;
+        return total + (expectedWeight * requiredCount);
+    }, 0);
+}
+
+function calculateModelCost(model) {
+    if (!model.requirements || model.requirements.length === 0) {
+        return 0;
+    }
+
+    let totalCost = 0;
+    model.requirements.forEach(req => {
+        const filament = filaments.find(f => f.id === req.filamentId);
+        if (filament && filament.purchasePrice) {
+            // Calculate cost per gram from price per kg
+            const pricePerGram = filament.purchasePrice / 1000;
+            const expectedWeight = req.expectedWeight || 0;
+            const requiredCount = req.requiredCount || 1;
+            totalCost += pricePerGram * expectedWeight * requiredCount;
+        }
+    });
+
+    return totalCost;
+}
+
+function getModelUsageStatistics(modelId) {
+    const model = models.find(m => m.id === modelId);
+    if (!model) {
+        return null;
+    }
+
+    const modelPrints = prints.filter(p => p.modelId === modelId);
+    return {
+        totalPrints: modelPrints.length,
+        expectedWeight: calculateTotalExpectedUsage(model),
+        actualWeightUsed: modelPrints.reduce((total, print) => {
+            // Handle both legacy and new print formats
+            if (print.filaments && print.filaments.length > 0) {
+                return total + print.filaments.reduce((filTotal, fil) => filTotal + (fil.actualWeight || 0), 0);
+            } else {
+                return total + (print.weight || 0);
+            }
+        }, 0),
+        averageVariance: calculateAverageUsageVariance(modelId),
+        lastPrinted: modelPrints.length > 0 ? Math.max(...modelPrints.map(p => new Date(p.date))) : null
+    };
+}
+
+function calculateAverageUsageVariance(modelId) {
+    const model = models.find(m => m.id === modelId);
+    if (!model || !model.requirements) {
+        return 0;
+    }
+
+    const modelPrints = prints.filter(p => p.modelId === modelId);
+    if (modelPrints.length === 0) {
+        return 0;
+    }
+
+    const variances = modelPrints.map(print => {
+        let totalExpectedWeight = 0;
+        let totalActualWeight = 0;
+
+        model.requirements.forEach(req => {
+            totalExpectedWeight += (req.expectedWeight || 0) * (req.requiredCount || 1);
+        });
+
+        // Get actual weight from print
+        if (print.filaments && print.filaments.length > 0) {
+            totalActualWeight = print.filaments.reduce((total, fil) => total + (fil.actualWeight || 0), 0);
+        } else {
+            totalActualWeight = print.weight || 0;
+        }
+
+        if (totalExpectedWeight === 0) return 0;
+        return ((totalActualWeight - totalExpectedWeight) / totalExpectedWeight) * 100;
+    });
+
+    return variances.reduce((sum, variance, _, arr) => sum + variance / arr.length, 0);
 }
 
 function updateModelTable() {
@@ -2510,6 +2906,99 @@ function updateModelTable() {
     // Set global models data and refresh the grid
     window.models = models;
     window.dataGrids.modelTable.updateData();
+}
+
+// Model data migration functions
+function migrateModelData() {
+    let migrationCount = 0;
+    const migrationWarnings = [];
+
+    models.forEach(model => {
+        let needsMigration = false;
+
+        // Migrate requirements to enhanced schema
+        if (model.requirements) {
+            model.requirements.forEach(req => {
+                if (!req.expectedWeight) {
+                    req.expectedWeight = 20; // Default 20g per print
+                    migrationWarnings.push(`Model "${model.name}": Set default expected weight (20g) for ${req.color || 'unknown filament'}`);
+                    needsMigration = true;
+                }
+
+                if (!req.tolerance) {
+                    req.tolerance = 10; // Default 10% tolerance
+                    needsMigration = true;
+                }
+
+                if (!req.requiredCount) {
+                    req.requiredCount = 1; // Default 1 quantity
+                    needsMigration = true;
+                }
+            });
+        }
+
+        // Set default values for new enhanced fields
+        if (!model.category) {
+            model.category = 'Other';
+            needsMigration = true;
+        }
+
+        if (!model.difficulty) {
+            model.difficulty = 'Medium';
+            needsMigration = true;
+        }
+
+        if (!model.addedDate) {
+            model.addedDate = new Date().toISOString().split('T')[0];
+            needsMigration = true;
+        }
+
+        if (needsMigration) {
+            migrationCount++;
+        }
+    });
+
+    if (migrationCount > 0) {
+        saveData();
+    }
+
+    return { migratedCount, warnings: migrationWarnings };
+}
+
+function validateModelFilamentRelationships() {
+    const issues = [];
+
+    models.forEach(model => {
+        if (!model.requirements || model.requirements.length === 0) {
+            issues.push({
+                type: 'missing_requirements',
+                modelId: model.id,
+                modelName: model.name,
+                message: 'Model has no filament requirements defined'
+            });
+            return;
+        }
+
+        model.requirements.forEach(req => {
+            const filament = filaments.find(f => f.id === req.filamentId);
+            if (!filament) {
+                issues.push({
+                    type: 'missing_filament',
+                    modelId: model.id,
+                    modelName: model.name,
+                    filamentId: req.filamentId,
+                    message: `Required filament (ID: ${req.filamentId}) not found in inventory`
+                });
+            }
+        });
+    });
+
+    return issues;
+}
+
+// Run migration on data load if needed
+if (models.length > 0) {
+    migrateModelData();
 }
 
 // Print Functions
@@ -2661,10 +3150,8 @@ function populatePrintFilamentsFromModel(modelName) {
                     // Immediately set the value since the options are already populated in createPrintFilamentSearchBox
                     selectInput.value = matchingFilament.id;
                 } else {
-                    console.warn('Filament not found for requirement:', requirement);
                 }
             } else {
-                console.warn('No filamentId in requirement:', requirement);
             }
         }
 
@@ -2878,7 +3365,6 @@ function testColorPicker() {
 function applyFeatureFallbacks(features) {
     // LocalStorage fallback
     if (!features.localStorage) {
-        console.warn('LocalStorage not available, using cookies fallback');
         // Implement cookie-based storage fallback
         window.enhancedStorage = {
             setItem: function(key, value) {
@@ -2896,7 +3382,6 @@ function applyFeatureFallbacks(features) {
 
     // JSON fallback
     if (!features.json) {
-        console.warn('JSON not available, basic fallback implemented');
         // Implement basic JSON parsing for simple objects
         window.safeJSON = {
             parse: function(str) {
@@ -2919,13 +3404,11 @@ function applyFeatureFallbacks(features) {
 
     // Form validation fallback
     if (!features.formValidation) {
-        console.warn('Browser form validation not available, using custom validation');
         // Our custom validation will handle this
     }
 
     // Color picker fallback
     if (!features.colorPicker) {
-        console.warn('Color picker not available, using text input fallback');
         const colorInputs = document.querySelectorAll('input[type="color"]');
         colorInputs.forEach(input => {
             const textInput = document.createElement('input');
@@ -2949,7 +3432,6 @@ function applyFeatureFallbacks(features) {
 
     // ES6 fallback for older browsers
     if (!features.es6) {
-        console.warn('ES6 features not available, using fallback implementations');
         // Basic polyfills for arrow functions and let/const would go here
         // But since we're using a modern codebase, we'll warn the user
         showWarningMessage('Your browser is outdated. Some features may not work correctly. Please upgrade to a modern browser for the best experience.', 10000);
@@ -3082,6 +3564,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Setup model form submission
+        const modelForm = document.getElementById('modelForm');
+        if (modelForm) {
+            modelForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                addModel();
+            });
+        }
+
         // Setup real-time validation
         setupRealtimeValidation();
 
@@ -3152,4 +3643,351 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleIcon.textContent = '▶';
         }
     }
+});// ============================
+// Category Management Functions
+// ============================
+
+// Initialize categories if not already present
+function initializeCategories() {
+    if (!modelCategories) {
+        modelCategories = [
+            'Functional',
+            'Decoration',
+            'Tools',
+            'Art',
+            'Toys',
+            'Replacement Parts',
+            'Prototypes',
+            'Other'
+        ];
+        saveCategories();
+    }
+}
+
+// Save categories to localStorage
+function saveCategories() {
+    localStorage.setItem('modelCategories', JSON.stringify(modelCategories));
+}
+
+// Load categories from localStorage
+function loadCategories() {
+    const saved = localStorage.getItem('modelCategories');
+    if (saved) {
+        modelCategories = JSON.parse(saved);
+    } else {
+        initializeCategories();
+    }
+}
+
+// Render category chips in the models section
+function renderCategoryChips() {
+    const container = document.getElementById('modelCategoryChips');
+    if (!container) return;
+
+    // Add "All" option
+    let html = '<div class="category-chip" onclick="filterByCategory(null)" data-category="all">All</div>';
+
+    // Add each category with count
+    modelCategories.forEach(category => {
+        const count = models.filter(model => model.category === category).length;
+        html += `
+            <div class="category-chip" onclick="filterByCategory('${category}')" data-category="${category}">
+                ${category}
+                ${count > 0 ? `<span class="category-chip-count">${count}</span>` : ''}
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+// Filter models by category
+function filterByCategory(category) {
+    // Update active chip styling
+    document.querySelectorAll('.category-chip').forEach(chip => {
+        chip.classList.remove('active');
+    });
+
+    const activeChip = category ?
+        document.querySelector(`[data-category="${category}"]`) :
+        document.querySelector('[data-category="all"]');
+    if (activeChip) activeChip.classList.add('active');
+
+    // Filter the models table
+    if (window.dataGrids && window.dataGrids.modelTable) {
+        if (category) {
+            window.dataGrids.modelTable.visibleData = window.dataGrids.modelTable.originalData.filter(model =>
+                model.category === category
+            );
+        } else {
+            window.dataGrids.modelTable.visibleData = [...window.dataGrids.modelTable.originalData];
+        }
+        window.dataGrids.modelTable.currentPage = 1;
+        window.dataGrids.modelTable.renderTable();
+        window.dataGrids.modelTable.updatePagination();
+    }
+}
+
+// Open category management modal
+function openCategoryModal() {
+    renderCategoryList();
+    document.getElementById('categoryManagementModal').style.display = 'block';
+}
+
+// Close category management modal
+function closeCategoryModal() {
+    document.getElementById('categoryManagementModal').style.display = 'none';
+    renderCategoryChips(); // Refresh chips in case categories were changed
+}
+
+// Render category list in management modal
+function renderCategoryList() {
+    const container = document.getElementById('categoryList');
+    if (!container) return;
+
+    let html = '';
+    modelCategories.forEach(category => {
+        const count = models.filter(model => model.category === category).length;
+        html += `
+            <div class="category-item" class="category-item-${category.replace(/\s+/g, '-')}">
+                <div class="category-item-info">
+                    <span class="category-item-name">${category}</span>
+                    <span class="category-item-count">${count} model${count !== 1 ? 's' : ''}</span>
+                </div>
+                <div class="category-item-actions">
+                    <button class="category-edit-btn" onclick="editCategory('${category}')">Edit</button>
+                    <button class="category-delete-btn" onclick="deleteCategory('${category}')">Delete</button>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html || '<p style="text-align: center; color: #6c757d;">No categories found</p>';
+}
+
+// Add new category
+function addCategory() {
+    const input = document.getElementById('newCategoryName');
+    const categoryName = input.value.trim();
+
+    if (!categoryName) {
+        alert('Please enter a category name');
+        return;
+    }
+
+    if (modelCategories.includes(categoryName)) {
+        alert('Category already exists');
+        return;
+    }
+
+    if (modelCategories.length >= 20) {
+        alert('Maximum 20 categories allowed');
+        return;
+    }
+
+    modelCategories.push(categoryName);
+    modelCategories.sort(); // Sort alphabetically
+    saveCategories();
+    renderCategoryList();
+    renderCategoryChips();
+    populateCategoryDropdown();
+
+    input.value = '';
+}
+
+// Edit category
+function editCategory(oldName) {
+    const item = document.querySelector(`.category-item-${oldName.replace(/\s+/g, '-')}`);
+    if (!item) return;
+
+    const nameSpan = item.querySelector('.category-item-name');
+    const currentName = nameSpan.textContent;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentName;
+    input.className = 'category-edit-input';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save';
+    saveBtn.className = 'category-edit-btn';
+    saveBtn.onclick = () => {
+        const newName = input.value.trim();
+        if (!newName) {
+            alert('Category name cannot be empty');
+            return;
+        }
+        if (newName !== oldName && modelCategories.includes(newName)) {
+            alert('Category already exists');
+            return;
+        }
+
+        // Update category in list
+        const index = modelCategories.indexOf(oldName);
+        if (index !== -1) {
+            modelCategories[index] = newName;
+
+            // Update all models with this category
+            models.forEach(model => {
+                if (model.category === oldName) {
+                    model.category = newName;
+                }
+            });
+
+            modelCategories.sort();
+            saveCategories();
+            saveData();
+            renderCategoryList();
+            renderCategoryChips();
+            populateCategoryDropdown();
+        }
+    };
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.className = 'category-edit-btn';
+    cancelBtn.onclick = () => {
+        renderCategoryList();
+    };
+
+    const actionsDiv = item.querySelector('.category-item-actions');
+    actionsDiv.innerHTML = '';
+    actionsDiv.appendChild(saveBtn);
+    actionsDiv.appendChild(cancelBtn);
+
+    nameSpan.textContent = '';
+    nameSpan.appendChild(input);
+    input.focus();
+    input.select();
+}
+
+// Delete category
+function deleteCategory(categoryName) {
+    const count = models.filter(model => model.category === categoryName).length;
+    const message = count > 0 ?
+        'Are you sure you want to delete "' + categoryName + '"? This will affect ' + count + ' model' + (count !== 1 ? 's' : '') + '. These models will be set to "Other".' :
+        'Are you sure you want to delete "' + categoryName + '"?';
+
+    if (confirm(message)) {
+        // Update models with this category to "Other"
+        models.forEach(model => {
+            if (model.category === categoryName) {
+                model.category = 'Other';
+            }
+        });
+
+        if (!modelCategories.includes('Other')) {
+            modelCategories.push('Other');
+        }
+
+        // Remove from categories list
+        const index = modelCategories.indexOf(categoryName);
+        if (index !== -1) {
+            modelCategories.splice(index, 1);
+        }
+
+        modelCategories.sort();
+        saveCategories();
+        saveData();
+        renderCategoryList();
+        renderCategoryChips();
+        populateCategoryDropdown();
+    }
+}
+
+// Event listener for manage categories button
+document.addEventListener('DOMContentLoaded', function() {
+    const manageBtn = document.getElementById('manageCategoriesBtn');
+    if (manageBtn) {
+        manageBtn.addEventListener('click', openCategoryModal);
+    }
+
+    // Load and initialize categories
+    loadCategories();
+    populateCategoryDropdown();
+    initializeColorEnhancements();
 });
+
+// Enhanced Color Input Functionality
+function initializeColorEnhancements() {
+    const colorInput = document.getElementById('editFilamentColorHex');
+    const colorSwatch = document.getElementById('editFilamentColorSwatch');
+    const colorPickerBtn = document.getElementById('editFilamentColorPickerBtn');
+
+    if (colorInput && colorSwatch && colorPickerBtn) {
+        // Sync color input with swatch
+        colorInput.addEventListener('input', function() {
+            const hex = this.value.trim();
+            if (isValidHexColor(hex)) {
+                updateColorSwatch(hex, colorSwatch);
+            }
+        });
+
+        // Color picker functionality
+        colorPickerBtn.addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'color';
+            input.value = colorInput.value || '#000000';
+
+            input.addEventListener('change', function() {
+                const hex = this.value.toUpperCase();
+                colorInput.value = hex;
+                updateColorSwatch(hex, colorSwatch);
+            });
+
+            input.click();
+        });
+
+        // Initialize with current value
+        if (colorInput.value) {
+            updateColorSwatch(colorInput.value, colorSwatch);
+        }
+    }
+}
+
+function updateColorSwatch(hex, swatchElement) {
+    if (!swatchElement) return;
+
+    const upperHex = hex.toUpperCase();
+    swatchElement.style.background = upperHex;
+    swatchElement.setAttribute('data-hex', upperHex);
+
+    // Adjust text color based on background brightness
+    const brightness = getColorBrightness(upperHex);
+    const textColor = brightness > 128 ? '#000000' : '#FFFFFF';
+    swatchElement.style.color = textColor;
+}
+
+function getColorBrightness(hex) {
+    // Remove # if present
+    hex = hex.replace('#', '');
+
+    // Convert to RGB
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+
+    // Calculate perceived brightness
+    return (r * 299 + g * 587 + b * 114) / 1000;
+}
+
+// Populate category dropdown in edit model form
+function populateCategoryDropdown() {
+    const select = document.getElementById('editModelCategory');
+    if (!select) return;
+
+    // Clear existing options except the first one
+    select.innerHTML = '<option value="">Select Category...</option>';
+
+    // Add categories from modelCategories array
+    modelCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        select.appendChild(option);
+    });
+}
+
+function isValidHexColor(hex) {
+    return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex);
+}

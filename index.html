@@ -101,10 +101,13 @@
                                     <div class="form-group">
                                         <fieldset>
                                             <legend>Temperature Range (°C)</legend>
-                                            <label for="filamentTempMin" id="filamentTempMinLabel">Min Temp:</label>
-                                            <input type="number" id="filamentTempMin" name="tempMin" min="150" max="350" placeholder="min">
-                                            <label for="filamentTempMax" id="filamentTempMaxLabel">Max Temp:</label>
-                                            <input type="number" id="filamentTempMax" name="tempMax" min="150" max="350" placeholder="max">
+                                            <div class="temp-range-inputs">
+                                                <label for="filamentTempMin" id="filamentTempMinLabel">Min:</label>
+                                                <input type="number" id="filamentTempMin" name="tempMin" min="150" max="350" placeholder="150" maxlength="7">
+                                                <span class="temp-separator">-</span>
+                                                <label for="filamentTempMax" id="filamentTempMaxLabel">Max:</label>
+                                                <input type="number" id="filamentTempMax" name="tempMax" min="150" max="350" placeholder="250" maxlength="7">
+                                            </div>
                                         </fieldset>
                                     </div>
                                     <div class="form-group">
@@ -125,7 +128,7 @@
                     <div id="filamentGridWrapper">
                         <div class="data-grid-controls">
                             <div class="data-grid-search">
-                                <input type="text" id="filamentTableSearch" placeholder="🔍 Search filaments..." aria-label="Search filaments">
+                                <input type="text" id="filamentTableSearch" placeholder="🔍 Search... Try: weight:>500, weight:100-500, PLA" aria-label="Search filaments" title="Math filters: weight:>500, weight:<200, weight:100-500, weight:=1000">
                             </div>
                             <div class="data-grid-pagination">
                                 <button id="filamentGridPrev" disabled aria-label="Previous page">‹</button>
@@ -144,7 +147,7 @@
                                         <th scope="col" data-column="weight" class="sortable-header">Weight (g)</th>
                                         <th scope="col" data-column="inStock" class="sortable-header">Status</th>
                                         <th scope="col" data-column="location" class="sortable-header">Location</th>
-                                        <th scope="col">Action</th>
+                                        <th scope="col" data-column="actions" class="sortable-header">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="filamentTableBody"></tbody>
@@ -174,16 +177,74 @@
                         <span class="toggle-icon" id="addModelSection-toggle">▼</span>
                     </div>
                     <div id="addModelSection" class="section-content collapsible" style="max-height: 0px; overflow: hidden;">
-                        <div class="input-group">
-                            <input type="text" id="modelName" placeholder="Model Name">
-                            <input type="text" id="modelLink" placeholder="Link/Notes (optional)">
-                        </div>
-                        <div style="margin-bottom:15px;">
-                            <label style="display:block;margin-bottom:10px;font-weight:600;color:#495057;">Required Filaments:</label>
-                            <div id="requiredFilamentsContainer"></div>
-                            <button type="button" class="add-req-btn" onclick="addFilamentRequirement()">+ Add Filament</button>
-                        </div>
-                        <button onclick="addModel()">Add Model</button>
+                        <form id="modelForm" aria-label="Add new model">
+                            <div class="input-group">
+                                <div class="form-group">
+                                    <label for="modelName" id="modelNameLabel">Model Name</label>
+                                    <input type="text" id="modelName" name="modelName" placeholder="Model name" required aria-required="true">
+                                </div>
+                                <div class="form-group">
+                                    <label for="modelLink" id="modelLinkLabel">Source URL / Notes</label>
+                                    <input type="url" id="modelLink" name="modelLink" placeholder="https://example.com/model or notes">
+                                </div>
+                                <div class="form-group">
+                                    <label for="modelCategory" id="modelCategoryLabel">Category</label>
+                                    <select id="modelCategory" name="category" required aria-required="true">
+                                        <option value="">Select Category...</option>
+                                        <option value="Functional">Functional</option>
+                                        <option value="Decoration">Decoration</option>
+                                        <option value="Tools">Tools</option>
+                                        <option value="Toys">Toys</option>
+                                        <option value="Art">Art</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modelDifficulty" id="modelDifficultyLabel">Difficulty Level</label>
+                                    <select id="modelDifficulty" name="difficulty" required aria-required="true">
+                                        <option value="">Select Difficulty...</option>
+                                        <option value="Easy">Easy</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="Hard">Hard</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modelPrintTime" id="modelPrintTimeLabel">Estimated Print Time (minutes)</label>
+                                    <input type="number" id="modelPrintTime" name="printTime" placeholder="120" min="0" max="1440" aria-describedby="printTimeHelp">
+                                    <small id="printTimeHelp" class="form-help">Estimated printing time in minutes (max: 24 hours)</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modelLayerHeight" id="modelLayerHeightLabel">Recommended Layer Height (mm)</label>
+                                    <input type="number" id="modelLayerHeight" name="layerHeight" placeholder="0.2" min="0.05" max="1.0" step="0.05" aria-describedby="layerHeightHelp">
+                                    <small id="layerHeightHelp" class="form-help">Layer height between 0.05mm and 1.0mm</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modelInfill" id="modelInfillLabel">Recommended Infill (%)</label>
+                                    <input type="number" id="modelInfill" name="infill" placeholder="20" min="0" max="100" step="5" aria-describedby="infillHelp">
+                                    <small id="infillHelp" class="form-help">Infill percentage (0-100%)</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modelSupports" id="modelSupportsLabel">Supports Required</label>
+                                    <select id="modelSupports" name="supportsRequired" required aria-required="true">
+                                        <option value="false">No</option>
+                                        <option value="true">Yes</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modelNotes" id="modelNotesLabel">Printing Notes</label>
+                                    <textarea id="modelNotes" name="notes" rows="3" placeholder="Additional printing notes, tips, or observations"></textarea>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:15px;">
+                                <label style="display:block;margin-bottom:10px;font-weight:600;color:#495057;">Required Filaments:</label>
+                                <div id="requiredFilamentsContainer"></div>
+                                <button type="button" class="add-req-btn" onclick="addFilamentRequirement()">+ Add Filament</button>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" id="addModelBtn">Add Model</button>
+                                <button type="button" id="cancelModelBtn" style="display: none;">Cancel</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
@@ -191,6 +252,12 @@
                     <h2>Model Database</h2>
                     <div id="modelGridWrapper">
                         <div class="data-grid-controls">
+                            <div class="category-management">
+                                <div class="category-chips" id="modelCategoryChips">
+                                    <!-- Categories will be dynamically added here -->
+                                </div>
+                                <button type="button" id="manageCategoriesBtn" class="manage-categories-btn">⚙️ Categories</button>
+                            </div>
                             <div class="data-grid-search">
                                 <input type="text" id="modelTableSearch" placeholder="🔍 Search models..." aria-label="Search models">
                             </div>
@@ -206,10 +273,13 @@
                                 <thead>
                                     <tr>
                                         <th scope="col" data-column="name" class="sortable-header">Model Name</th>
+                                        <th scope="col" data-column="category" class="sortable-header">Category</th>
+                                        <th scope="col" data-column="difficulty" class="sortable-header">Difficulty</th>
                                         <th scope="col" data-column="requiredFilaments" class="sortable-header">Required Filaments</th>
+                                        <th scope="col" data-column="printTime" class="sortable-header">Est. Time</th>
                                         <th scope="col" data-column="canPrint" class="sortable-header">Can Print?</th>
                                         <th scope="col" data-column="link" class="sortable-header">Link/Notes</th>
-                                        <th scope="col">Action</th>
+                                        <th scope="col" data-column="actions" class="sortable-header">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="modelTableBody"></tbody>
@@ -287,7 +357,14 @@
                     </div>
                     <div class="form-group">
                         <label for="editFilamentColorHex">Color Code</label>
-                        <input type="color" id="editFilamentColorHex" name="colorHex" value="#ff5733">
+                        <div class="enhanced-color-input-wrapper">
+                            <input type="text" id="editFilamentColorHex" name="colorHex" placeholder="#RRGGBB" value="#ff5733"
+                                   class="enhanced-color-input" maxlength="7"
+                                   pattern="^#[0-9A-Fa-f]{6}$"
+                                   aria-label="Color hex code">
+                            <div class="enhanced-color-swatch" id="editFilamentColorSwatch" style="background: #ff5733" data-hex="#FF5733"></div>
+                            <button type="button" class="color-picker-btn" id="editFilamentColorPickerBtn" title="Open color picker">🎨</button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="editFilamentDiameter">Diameter</label>
@@ -318,10 +395,13 @@
                 <div class="form-group">
                     <fieldset>
                         <legend>Temperature Range (°C)</legend>
-                        <label for="editFilamentTempMin">Min Temp:</label>
-                        <input type="number" id="editFilamentTempMin" name="tempMin" min="150" max="350" placeholder="150">
-                        <label for="editFilamentTempMax">Max Temp:</label>
-                        <input type="number" id="editFilamentTempMax" name="tempMax" min="150" max="350" placeholder="250">
+                        <div class="temp-range-inputs">
+                            <label for="editFilamentTempMin">Min:</label>
+                            <input type="number" id="editFilamentTempMin" name="tempMin" min="150" max="350" placeholder="150" maxlength="7">
+                            <span class="temp-separator">-</span>
+                            <label for="editFilamentTempMax">Max:</label>
+                            <input type="number" id="editFilamentTempMax" name="tempMax" min="150" max="350" placeholder="250" maxlength="7">
+                        </div>
                     </fieldset>
                 </div>
                 <div class="form-group">
@@ -340,17 +420,69 @@
         <div class="modal-content">
             <div class="modal-header">Edit Model</div>
             <div class="input-group">
-                <input type="text" id="editModelName" placeholder="Model Name">
-                <input type="text" id="editModelLink" placeholder="Link/Notes">
+                <input type="text" id="editModelName" placeholder="Model Name" required>
+                <input type="url" id="editModelLink" placeholder="Link/URL">
+            </div>
+            <div class="input-group">
+                <select id="editModelCategory">
+                    <option value="">Select Category...</option>
+                    <option value="Functional">Functional</option>
+                    <option value="Artistic">Artistic</option>
+                    <option value="Educational">Educational</option>
+                    <option value="Prototype">Prototype</option>
+                    <option value="Replacement Part">Replacement Part</option>
+                    <option value="Toy/Gift">Toy/Gift</option>
+                    <option value="Other">Other</option>
+                </select>
+                <select id="editModelDifficulty">
+                    <option value="">Select Difficulty...</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                    <option value="Expert">Expert</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <input type="number" id="editModelPrintTime" placeholder="Print Time (hours)" min="0.5" max="500" step="0.5">
+                <input type="number" id="editModelLayerHeight" placeholder="Layer Height (mm)" min="0.05" max="1.0" step="0.05">
+            </div>
+            <div class="input-group">
+                <input type="number" id="editModelInfill" placeholder="Infill (%)" min="0" max="100" step="5">
+                <select id="editModelSupports">
+                    <option value="false">No Supports</option>
+                    <option value="true">Requires Supports</option>
+                </select>
             </div>
             <div style="margin-top:15px;">
                 <label style="display:block;margin-bottom:10px;font-weight:600;color:#495057;">Required Filaments:</label>
                 <div id="editRequiredFilamentsContainer"></div>
                 <button type="button" class="add-req-btn" onclick="addEditFilamentRequirement()">+ Add Filament</button>
             </div>
+            <div style="margin-top:15px;">
+                <label for="editModelNotes" style="display:block;margin-bottom:10px;font-weight:600;color:#495057;">Notes:</label>
+                <textarea id="editModelNotes" rows="3" style="width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;"></textarea>
+            </div>
             <div class="modal-buttons">
                 <button class="cancel-btn" onclick="closeEditModelModal()">Cancel</button>
                 <button onclick="saveEditModel()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="categoryManagementModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Manage Categories</div>
+            <div class="category-list" id="categoryList">
+                <!-- Categories will be displayed here -->
+            </div>
+            <div class="add-category-form">
+                <div class="input-group">
+                    <input type="text" id="newCategoryName" placeholder="New category name..." aria-label="New category name">
+                    <button type="button" id="addCategoryBtn" onclick="addCategory()">Add</button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="cancel-btn" onclick="closeCategoryModal()">Done</button>
             </div>
         </div>
     </div>
