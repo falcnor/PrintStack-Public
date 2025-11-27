@@ -8,6 +8,85 @@ let editingModelId = null;
 let editingPrintId = null;
 let modelCategories = [];
 
+// Performance optimization: Cache for frequently accessed data
+const DataCache = {
+    filamentUsage: new Map(),
+    modelPrintability: new Map(),
+    lastUpdated: 0,
+
+    invalidate() {
+        this.filamentUsage.clear();
+        this.modelPrintability.clear();
+        this.lastUpdated = Date.now();
+    },
+
+    getFilamentUsage(filamentId) {
+        if (!this.filamentUsage.has(filamentId)) {
+            const usage = prints
+                .filter(p => p.filamentId === filamentId)
+                .reduce((total, print) => total + (print.actualWeight || print.weight || 0), 0);
+            this.filamentUsage.set(filamentId, usage);
+        }
+        return this.filamentUsage.get(filamentId);
+    },
+
+    getModelPrintability(modelId) {
+        if (!this.modelPrintability.has(modelId)) {
+            const model = models.find(m => m.id === modelId);
+            const printable = model && model.requirements && model.requirements.every(req => {
+                const filament = filaments.find(f => f.id === req.filamentId);
+                return filament && filament.inStock && filament.weight >= req.expectedWeight;
+            });
+            this.modelPrintability.set(modelId, printable);
+        }
+        return this.modelPrintability.get(modelId);
+    }
+};
+
+// Debounce utility for performance optimization
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Performance monitoring utility
+const PerformanceMonitor = {
+    enabled: false,
+    measurements: new Map(),
+
+    start(label) {
+        if (!this.enabled) return;
+        this.measurements.set(label, performance.now());
+    },
+
+    end(label) {
+        if (!this.enabled) return;
+        const start = this.measurements.get(label);
+        if (start) {
+            const duration = performance.now() - start;
+            if (duration > 100) {
+                console.warn(`Performance warning: ${label} took ${duration.toFixed(2)}ms (>100ms target)`);
+            }
+            this.measurements.delete(label);
+        }
+    },
+
+    enable() { this.enabled = true; },
+    disable() { this.enabled = false; }
+};
+
+// Enable performance monitoring in development
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    PerformanceMonitor.enable();
+}
+
 // Dynamic Material Types Management
 let materialTypes = ['PLA', 'PETG', 'ABS', 'TPU']; // Default material types
 
@@ -935,34 +1014,30 @@ function validateField(fieldName, value, options = {}) {
         };
     }
 
+    // Run validation pipeline
+    return validateFieldPipeline(fieldName, value, rule);
+}
+
+function validateFieldPipeline(fieldName, value, rule) {
     // Type validation (important - this comes BEFORE allowed values check)
     value = validateFieldType(value, rule, fieldName);
     if (typeof value === 'object' && !value.valid) {
         return value;
     }
 
-    // Range validation
-    const rangeResult = validateFieldRange(value, rule, fieldName);
-    if (!rangeResult.valid) {
-        return rangeResult;
-    }
+    // Perform all validations in sequence
+    const validators = [
+        validateFieldRange,
+        validateFieldLength,
+        validateFieldPattern,
+        validateFieldAllowed
+    ];
 
-    // Length validation
-    const lengthResult = validateFieldLength(value, rule, fieldName);
-    if (!lengthResult.valid) {
-        return lengthResult;
-    }
-
-    // Pattern validation
-    const patternResult = validateFieldPattern(value, rule, fieldName);
-    if (!patternResult.valid) {
-        return patternResult;
-    }
-
-    // Allowed values validation (now AFTER type conversion)
-    const allowedResult = validateFieldAllowed(value, rule, fieldName);
-    if (!allowedResult.valid) {
-        return allowedResult;
+    for (const validator of validators) {
+        const result = validator(value, rule, fieldName);
+        if (!result.valid) {
+            return result;
+        }
     }
 
     // Custom validation
@@ -1090,43 +1165,25 @@ function validateForm(formElement, options = {}) {
     const errors = {};
     let firstErrorField = null;
 
-
-    // Get all form inputs
+    // Get all form inputs and validate each
     const inputs = formElement.querySelectorAll('input, select, textarea');
+    firstErrorField = validateFormInputs(inputs, formElement, errors);
+
+    // Focus first error field for accessibility
+    focusFirstErrorField(firstErrorField, errors, options);
+
+    return {
+        valid: Object.keys(errors).length === 0,
+        errors: errors
+    };
+}
+
+function validateFormInputs(inputs, formElement, errors) {
+    let firstErrorField = null;
 
     inputs.forEach(input => {
         const fieldName = input.name || input.id;
-        let value = input.value;
-
-        // Handle special cases
-        if (input.type === 'checkbox') {
-            value = input.checked;
-        } else if (input.type === 'radio') {
-            return; // Skip radio buttons for now, handled separately
-        }
-
-        // Handle material type with custom value
-        if (fieldName === 'materialType' && value === 'Other') {
-            const isEditForm = formElement.id === 'editFilamentForm';
-            const customInputId = isEditForm ? 'editFilamentMaterialTypeCustom' : 'filamentMaterialTypeCustom';
-            const customInput = document.getElementById(customInputId);
-            if (customInput) {
-                value = customInput.value.trim();
-            }
-        }
-
-        // Handle temperature range for edit form
-        if (fieldName === 'tempRange' || fieldName.includes('temp')) {
-            const isEditForm = formElement.id === 'editFilamentForm';
-            const tempMinId = isEditForm ? 'editFilamentTempMin' : 'filamentTempMin';
-            const tempMaxId = isEditForm ? 'editFilamentTempMax' : 'filamentTempMax';
-            const tempMin = document.getElementById(tempMinId);
-            const tempMax = document.getElementById(tempMaxId);
-            value = {
-                min: tempMin ? tempMin.value : '',
-                max: tempMax ? tempMax.value : ''
-            };
-        }
+        let value = getFormInputValue(input, formElement);
 
         const options = {
             fieldName,
@@ -1149,17 +1206,58 @@ function validateForm(formElement, options = {}) {
         }
     });
 
+    return firstErrorField;
+}
 
-    // Focus first error field for accessibility
-    if (firstErrorField && options.focusFirstError !== false) {
-        firstErrorField.focus();
-        AccessibilityNotifications.announce(`Form error in ${firstErrorField.name || firstErrorField.id}: ${errors[firstErrorField.name || firstErrorField.id]}`, 'assertive');
+function getFormInputValue(input, formElement) {
+    let value = input.value;
+
+    // Handle special cases
+    if (input.type === 'checkbox') {
+        value = input.checked;
+    } else if (input.type === 'radio') {
+        return value; // Skip radio buttons for now, handled separately
     }
 
+    // Handle material type with custom value
+    if (input.name === 'materialType' && value === 'Other') {
+        value = getCustomMaterialTypeValue(formElement);
+    }
+
+    // Handle temperature range for edit form
+    if (input.name === 'tempRange' || input.name.includes('temp')) {
+        value = getTemperatureRangeValue(formElement);
+    }
+
+    return value;
+}
+
+function getCustomMaterialTypeValue(formElement) {
+    const isEditForm = formElement.id === 'editFilamentForm';
+    const customInputId = isEditForm ? 'editFilamentMaterialTypeCustom' : 'filamentMaterialTypeCustom';
+    const customInput = document.getElementById(customInputId);
+    return customInput ? customInput.value.trim() : '';
+}
+
+function getTemperatureRangeValue(formElement) {
+    const isEditForm = formElement.id === 'editFilamentForm';
+    const tempMinId = isEditForm ? 'editFilamentTempMin' : 'filamentTempMin';
+    const tempMaxId = isEditForm ? 'editFilamentTempMax' : 'filamentTempMax';
+    const tempMin = document.getElementById(tempMinId);
+    const tempMax = document.getElementById(tempMaxId);
+
     return {
-        valid: Object.keys(errors).length === 0,
-        errors: errors
+        min: tempMin ? tempMin.value : '',
+        max: tempMax ? tempMax.value : ''
     };
+}
+
+function focusFirstErrorField(firstErrorField, errors, options) {
+    if (firstErrorField && options.focusFirstError !== false) {
+        firstErrorField.focus();
+        const fieldName = firstErrorField.name || firstErrorField.id;
+        AccessibilityNotifications.announce(`Form error in ${fieldName}: ${errors[fieldName]}`, 'assertive');
+    }
 }
 
 function setupRealtimeValidation() {
@@ -1720,6 +1818,9 @@ function saveData() {
         localStorage.setItem('filaments', JSON.stringify(filaments));
         localStorage.setItem('models', JSON.stringify(models));
         localStorage.setItem('prints', JSON.stringify(prints));
+
+        // Invalidate cache when data is saved
+        DataCache.invalidate();
 
         return true;
     } catch (error) {
