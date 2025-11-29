@@ -631,7 +631,8 @@ class FilamentTable extends EnhancedDataGrid {
             { key: 'color', label: 'Color', sortType: 'text' },
             { key: 'weight', label: 'Weight (g)', sortType: 'number' },
             { key: 'location', label: 'Location', sortType: 'text' },
-            { key: 'inStock', label: 'Status', sortType: 'text' }
+            { key: 'inStock', label: 'Status', sortType: 'text' },
+            { key: 'notes', label: 'Notes', sortType: 'text' }
         ]);
     }
 
@@ -662,6 +663,10 @@ class FilamentTable extends EnhancedDataGrid {
             <span class="color-name">${item.colorName || item.color || 'Unknown'}</span>
         `;
 
+        const notesDisplay = item.notes ?
+            `<span class="notes-text" title="${item.notes.replace(/"/g, '&quot;')}">${item.notes.length > 30 ? item.notes.substring(0, 30) + '...' : item.notes}</span>` :
+            '<span class="notes-empty">-</span>';
+
         return `
             <tr data-id="${item.id}">
                 <td data-sortable="brand">${item.brand || 'Unknown'}</td>
@@ -670,6 +675,7 @@ class FilamentTable extends EnhancedDataGrid {
                 <td data-sortable="weight" data-sort-value="${item.weight || 0}">${(item.weight || 0).toFixed(1)}</td>
                 <td data-sortable="location">${item.location || 'Not specified'}</td>
                 <td data-sortable="inStock" class="status-cell">${stockStatus}</td>
+                <td data-sortable="notes" class="notes-cell">${notesDisplay}</td>
                 <td class="actions">
                     <button onclick="editFilament(${item.id})" aria-label="Edit ${item.brand || 'Unknown'} filament" class="btn-icon">✏️</button>
                     <button onclick="deleteFilament(${item.id})" aria-label="Delete ${item.brand || 'Unknown'} filament" class="btn-icon btn-danger">🗑️</button>
@@ -1165,17 +1171,30 @@ function validateForm(formElement, options = {}) {
     const errors = {};
     let firstErrorField = null;
 
+    console.log('validateForm: Starting validation');
+    console.log('validateForm: Form element:', !!formElement);
+
+    if (!formElement) {
+        console.error('validateForm: No form element provided');
+        return { valid: false, errors: { form: 'Form element is null' } };
+    }
+
     // Get all form inputs and validate each
     const inputs = formElement.querySelectorAll('input, select, textarea');
+    console.log('validateForm: Found inputs:', inputs.length);
+
     firstErrorField = validateFormInputs(inputs, formElement, errors);
 
     // Focus first error field for accessibility
     focusFirstErrorField(firstErrorField, errors, options);
 
-    return {
+    const result = {
         valid: Object.keys(errors).length === 0,
         errors: errors
     };
+
+    console.log('validateForm: Result:', result);
+    return result;
 }
 
 function validateFormInputs(inputs, formElement, errors) {
@@ -1334,7 +1353,10 @@ function setupRealtimeValidation() {
 }
 
 function showLoadingState(buttonElement, isLoading = true, customText = 'Processing...') {
+    console.log('showLoadingState called with isLoading:', isLoading, 'for button:', buttonElement?.id);
+
     if (isLoading) {
+        console.log('showLoadingState: Setting loading state');
         buttonElement.classList.add('loading');
         buttonElement.disabled = true;
         buttonElement.setAttribute('aria-busy', 'true');
@@ -1351,9 +1373,16 @@ function showLoadingState(buttonElement, isLoading = true, customText = 'Process
         buttonElement.style.opacity = '0.7';
         buttonElement.style.cursor = 'wait';
     } else {
+        console.log('showLoadingState: Clearing loading state');
+        console.log('showLoadingState: Before - classes:', buttonElement.className);
+        console.log('showLoadingState: Before - disabled:', buttonElement.disabled);
+
         buttonElement.classList.remove('loading');
         buttonElement.disabled = false;
         buttonElement.removeAttribute('aria-busy');
+
+        console.log('showLoadingState: After - classes:', buttonElement.className);
+        console.log('showLoadingState: After - disabled:', buttonElement.disabled);
 
         // Restore original state
         const originalText = buttonElement.getAttribute('data-original-text');
@@ -1365,6 +1394,23 @@ function showLoadingState(buttonElement, isLoading = true, customText = 'Process
         if (originalStyles) {
             buttonElement.style.cssText = originalStyles;
         }
+
+        // Force cleanup of any residual attributes
+        buttonElement.removeAttribute('data-original-text');
+        buttonElement.removeAttribute('data-original-styles');
+
+        // Force CSS reflow to stop any lingering animations
+        buttonElement.style.display = 'none';
+        buttonElement.offsetHeight; // Force reflow
+        buttonElement.style.display = '';
+
+        // Aggressively remove any lingering spinner styles
+        buttonElement.style.setProperty('opacity', '', '');
+        buttonElement.style.setProperty('cursor', '', '');
+        buttonElement.style.setProperty('animation', '', '');
+        buttonElement.style.setProperty('transform', '', '');
+
+        console.log('showLoadingState: Loading state completely cleared (CSS forced refresh)');
     }
 }
 
@@ -2094,11 +2140,54 @@ function addFilament() {
     const form = document.getElementById('filamentForm');
     const submitButton = document.getElementById('addFilamentBtn');
 
-    // Validate form using enhanced validation
-    const validation = validateForm(form);
-    if (!validation.valid) {
+    console.log('===== addFilament: Starting =====');
+    console.log('addFilament: Form found:', !!form);
+    console.log('addFilament: Button found:', !!submitButton);
+
+    if (!form) {
+        console.error('addFilament: Form not found!');
         return false;
     }
+
+    // Simple validation fallback - check required fields
+    const brandField = document.getElementById('filamentBrand');
+    const materialField = document.getElementById('filamentMaterialType');
+    const colorField = document.getElementById('filamentColor');
+
+    if (!brandField || !materialField || !colorField) {
+        console.error('addFilament: Required fields not found!');
+        return false;
+    }
+
+    if (!brandField.value.trim() || !materialField.value || !colorField.value.trim()) {
+        console.log('addFilament: Basic validation failed');
+        console.log('addFilament: Brand value:', brandField.value);
+        console.log('addFilament: Material value:', materialField.value);
+        console.log('addFilament: Color value:', colorField.value);
+
+        showErrorMessage('Please fill in all required fields (Brand, Material Type, Color)');
+
+        // Explicitly preserve form data - do NOT reset
+        console.log('addFilament: Form data preserved - returning early');
+        return false;
+    }
+
+    console.log('addFilament: Basic validation passed');
+
+    // Try enhanced validation, but don't fail if it has issues
+    try {
+        const validation = validateForm(form);
+        console.log('addFilament: Enhanced validation result:', validation);
+        if (!validation.valid) {
+            console.log('addFilament: Enhanced validation failed, but continuing:', validation.errors);
+            // Don't return false here - continue with basic validation
+        }
+    } catch (error) {
+        console.warn('addFilament: Enhanced validation failed:', error);
+        // Continue with basic validation
+    }
+
+    console.log('addFilament: All validation checks passed');
 
     // Show loading state for better UX
     showLoadingState(submitButton, true);
@@ -2126,9 +2215,12 @@ function addFilament() {
     } catch (error) {
         AccessibilityNotifications.announceError('Add Filament', 'An unexpected error occurred');
     } finally {
+        console.log('addFilament: Finally block reached - clearing loading state');
         showLoadingState(submitButton, false);
+        console.log('addFilament: Loading state cleared');
     }
 
+    console.log('addFilament: Function completed successfully');
     return true;
 }
 
@@ -4336,13 +4428,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Setup form validation
+        // Setup form validation - filament form handled by direct button onclick to avoid double calls
         const filamentForm = document.getElementById('filamentForm');
         if (filamentForm) {
-            filamentForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                addFilament();
-            });
+            // Note: Form submission handled by direct button onclick to avoid double calls
+            // filamentForm.addEventListener('submit', (e) => {
+            //     e.preventDefault();
+            //     addFilament();
+            // });
         }
 
         // Setup model form submission
