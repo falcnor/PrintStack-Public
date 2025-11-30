@@ -1,0 +1,469 @@
+/* Screen reader announcements - visually hidden */
+.screenReaderAnnouncement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.screenReaderOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip links */
+.skipLink {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #007bff;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+  transition: top 0.3s ease-in-out;
+  font-weight: 600;
+}
+
+.skipLink:focus {
+  top: 6px;
+}
+
+/* Keyboard help modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modalContent {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease-in-out;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  color: #495057;
+  font-size: 1.5rem;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 150ms ease-in-out;
+}
+
+.closeButton:hover {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.modalBody {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.shortcutsGrid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.shortcutCategory {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.categoryTitle {
+  background-color: #f8f9fa;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.shortcutList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.shortcutItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.shortcutItem:last-child {
+  border-bottom: none;
+}
+
+.shortcutKey {
+  background-color: #f1f3f4;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  color: #495057;
+  border: 1px solid #d1d5db;
+}
+
+.shortcutDescription {
+  color: #6c757d;
+  font-size: 0.875rem;
+  margin-left: 1rem;
+}
+
+.modalFooter {
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid #e1e5e9;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primaryButton {
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease-in-out;
+}
+
+.primaryButton:hover {
+  background-color: #0056b3;
+}
+
+/* Focus management */
+.focusContainer {
+  position: relative;
+}
+
+/* Live regions */
+.liveRegion {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Progress bar */
+.progressContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.progressBar {
+  flex: 1;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: #007bff;
+  transition: width 300ms ease-in-out;
+}
+
+.progressText {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+  min-width: 48px;
+  text-align: right;
+}
+
+/* Loading spinner */
+.loadingSpinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.spinnerIcon {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #f0f0f0;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Accessible button */
+.buttonSpinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+.buttonLoadingText {
+  display: inline-block;
+}
+
+/* Form field */
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.fieldLabel {
+  font-weight: 500;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.requiredIndicator {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+.fieldError {
+  color: #dc3545;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.fieldError::before {
+  content: "⚠";
+  font-size: 1rem;
+}
+
+.fieldHelp {
+  color: #6c757d;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+/* Focus styles for better accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* High contrast focus */
+@media (prefers-contrast: high) {
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  a:focus-visible {
+    outline: 3px solid #0000ff;
+    outline-offset: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .skipLink {
+    transition: none;
+  }
+
+  .modalContent {
+    transition: none;
+  }
+
+  .progressFill {
+    transition: none;
+  }
+
+  .spinnerIcon,
+  .buttonSpinner {
+    animation: none;
+  }
+}
+
+/* Keyboard navigation indicators */
+.keyboardActive .focusManager {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Table navigation support */
+.tableNavigation:focus {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+}
+
+.tableNavigation:focus-within {
+  outline: 2px solid #007bff;
+  outline-offset: -1px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .modalContent {
+    background-color: #2d3748;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  .modalHeader {
+    border-bottom-color: #4a5568;
+  }
+
+  .modalHeader h2 {
+    color: #e2e8f0;
+  }
+
+  .closeButton {
+    color: #a0aec0;
+  }
+
+  .closeButton:hover {
+    background-color: #4a5568;
+    color: #e2e8f0;
+  }
+
+  .shortcutCategory {
+    border-color: #4a5568;
+  }
+
+  .categoryTitle {
+    background-color: #1a202c;
+    border-bottom-color: #4a5568;
+    color: #e2e8f0;
+  }
+
+  .shortcutItem {
+    border-bottom-color: #2d3748;
+  }
+
+  .shortcutKey {
+    background-color: #4a5568;
+    color: #e2e8f0;
+    border-color: #718096;
+  }
+
+  .shortcutDescription {
+    color: #a0aec0;
+  }
+
+  .modalFooter {
+    border-top-color: #4a5568;
+  }
+
+  .fieldLabel {
+    color: #e2e8f0;
+  }
+
+  .fieldHelp {
+    color: #a0aec0;
+  }
+}
+
+/* Print styles */
+@media print {
+  .screenReaderAnnouncement,
+  .screenReaderOnly,
+  .skipLink {
+    display: none;
+  }
+
+  .modalOverlay {
+    position: static;
+    background: none;
+    box-shadow: none;
+  }
+
+  .modalContent {
+    position: static;
+    max-width: none;
+    max-height: none;
+    box-shadow: none;
+  }
+
+  .loadingSpinner {
+    display: none;
+  }
+
+  .buttonSpinner {
+    display: none;
+  }
+}
+
+/* High resolution screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .spinnerIcon,
+  .buttonSpinner {
+    border-width: 1px;
+  }
+}

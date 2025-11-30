@@ -1,0 +1,566 @@
+/* Theme Toggle Container */
+.themeToggle {
+  position: relative;
+  z-index: 1000;
+}
+
+/* Position Variants */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 1rem;
+}
+
+.sidebar {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.floating {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background: var(--background-card);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem;
+}
+
+/* Dropdown Button */
+.dropdownButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--background-primary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  min-height: 36px;
+}
+
+.dropdownButton:hover {
+  background: var(--background-hover);
+  border-color: var(--primary-color);
+}
+
+.dropdownButton:focus {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+  border-color: var(--focus-color);
+}
+
+.dropdownButton.open {
+  border-color: var(--primary-color);
+  background: var(--background-secondary);
+}
+
+.currentIcon {
+  font-size: var(--font-size-base);
+  width: 20px;
+  text-align: center;
+}
+
+.currentLabel {
+  font-weight: var(--font-weight-medium);
+}
+
+.dropdownArrow {
+  font-size: 0.625rem;
+  transition: transform 0.2s ease;
+  margin-left: 0.25rem;
+}
+
+.dropdownArrow.open {
+  transform: rotate(180deg);
+}
+
+/* Contrast Status Badge */
+.contrastInfo {
+  display: flex;
+  align-items: center;
+  margin-left: 0.5rem;
+}
+
+.statusBadge {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.statusBadge.good {
+  background: var(--success-color-light);
+  color: var(--success-color-dark);
+  border: 1px solid var(--success-color);
+}
+
+.statusBadge.excellent {
+  background: var(--primary-color-light);
+  color: var(--primary-color-dark);
+  border: 1px solid var(--primary-color);
+}
+
+.statusBadge.warning {
+  background: var(--warning-color-light);
+  color: var(--warning-color-dark);
+  border: 1px solid var(--warning-color);
+}
+
+/* Dropdown Menu */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 320px;
+  background: var(--background-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-xl);
+  z-index: 10000;
+  overflow: hidden;
+  animation: dropdownSlide 0.2s ease-out;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.themeToggle.sidebar .dropdown {
+  position: static;
+  top: 0;
+  margin-top: 0.5rem;
+  min-width: 100%;
+}
+
+.themeToggle.floating .dropdown {
+  position: fixed;
+  top: auto;
+  bottom: calc(100% + 0.5rem);
+  right: 0.75rem;
+  width: calc(100vw - 2.5rem);
+  max-width: 320px;
+}
+
+/* Dropdown Header */
+.dropdownHeader {
+  padding: 1rem 1.25rem;
+  background: var(--background-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dropdownTitle {
+  display: block;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.dropdownSubtitle {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* Options List */
+.optionsList {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  background: var(--background-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  margin-bottom: 0.25rem;
+}
+
+.option:last-child {
+  margin-bottom: 0;
+}
+
+.option:hover {
+  background: var(--background-hover);
+}
+
+.option:focus {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 1px;
+}
+
+.option.selected {
+  background: var(--primary-color-light);
+  border: 1px solid var(--primary-color);
+}
+
+.optionIcon {
+  font-size: var(--font-size-lg);
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Preview Box */
+.optionPreview {
+  flex-shrink: 0;
+}
+
+.previewBox {
+  width: 28px;
+  height: 20px;
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.optionContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.optionName {
+  display: block;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin-bottom: 0.125rem;
+}
+
+.optionDescription {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.3;
+  word-wrap: break-word;
+}
+
+.selectedIndicator {
+  color: var(--primary-color);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
+/* Dropdown Footer */
+.dropdownFooter {
+  padding: 1rem 1.25rem;
+  background: var(--background-secondary);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contrastNotice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.noticeIcon {
+  font-size: var(--font-size-sm);
+}
+
+.noticeText {
+  line-height: 1.4;
+}
+
+.closeButton {
+  padding: 0.5rem 1rem;
+  background: var(--background-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-primary);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-end;
+}
+
+.closeButton:hover {
+  background: var(--background-hover);
+  border-color: var(--primary-color);
+}
+
+.closeButton:focus {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 1px;
+}
+
+/* Toggle Button Variant */
+.toggleButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--background-primary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  min-height: 36px;
+  position: relative;
+}
+
+.toggleButton:hover {
+  background: var(--background-hover);
+  border-color: var(--primary-color);
+}
+
+.toggleButton:focus {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+  border-color: var(--focus-color);
+}
+
+.toggleIcon {
+  font-size: var(--font-size-base);
+  width: 20px;
+  text-align: center;
+}
+
+.toggleLabel {
+  font-weight: var(--font-weight-medium);
+}
+
+.toggleIndicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success-color);
+  border: 1px solid var(--background-card);
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s ease;
+}
+
+.toggleButton[aria-pressed="true"] .toggleIndicator {
+  opacity: 1;
+  transform: scale(1);
+  background: var(--success-color);
+}
+
+.highContrastToggle[aria-pressed="true"] {
+  background: var(--background-secondary);
+  border-color: var(--primary-color);
+}
+
+.highContrastToggle[aria-pressed="true"] .toggleIndicator {
+  background: var(--warning-color);
+}
+
+/* Contrast Status for Toggle */
+.contrastStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* High Contrast Mode Overrides */
+@media (prefers-contrast: high) {
+  .dropdown,
+  .toggleButton,
+  .option {
+    border-width: 2px;
+  }
+
+  .dropdownButton,
+  .closeButton {
+    border-width: 2px;
+  }
+
+  .option.selected {
+    border-width: 2px;
+  }
+
+  .previewBox {
+    border-width: 2px;
+  }
+
+  .statusBadge {
+    border-width: 2px;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .dropdown,
+  .dropdownArrow,
+  .option,
+  .toggleButton,
+  .toggleIndicator {
+    transition: none;
+  }
+
+  @keyframes dropdownSlide {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+/* Dark Theme Support */
+@media (prefers-color-scheme: dark) {
+  .dropdown,
+  .toggleButton {
+    background: var(--background-primary);
+  }
+
+  .dropdownHeader,
+  .dropdownFooter {
+    background: var(--background-secondary);
+  }
+
+  .option.selected {
+    background: var(--primary-color);
+    color: black;
+  }
+
+  .option.selected .optionName,
+  .option.selected .optionDescription {
+    color: black;
+  }
+}
+
+/* Focus Management */
+.option:focus-visible,
+.dropdownButton:focus-visible,
+.toggleButton:focus-visible,
+.closeButton:focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+/* Windows High Contrast Mode */
+@media screen and (-ms-high-contrast: active) {
+  .dropdown,
+  .toggleButton,
+  .dropdownButton,
+  .option,
+  .closeButton {
+    border: 2px solid windowText;
+    background: window;
+  }
+
+  .option.selected,
+  .toggleButton[aria-pressed="true"] {
+    background: highlight;
+    color: highlightText;
+  }
+
+  .statusBadge {
+    border: 2px solid windowText;
+  }
+
+  .previewBox {
+    border: 2px solid windowText;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .themeToggle,
+  .dropdown {
+    display: none;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dropdown {
+    min-width: 280px;
+    right: -1rem;
+  }
+
+  .themeToggle.floating .dropdown {
+    width: calc(100vw - 2rem);
+    right: 0.5rem;
+  }
+
+  .currentLabel {
+    display: none;
+  }
+
+  .optionDescription {
+    display: none;
+  }
+
+  .option {
+    padding: 0.625rem;
+  }
+
+  .dropdownHeader,
+  .dropdownFooter {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dropdown {
+    min-width: 260px;
+  }
+
+  .option {
+    gap: 0.5rem;
+  }
+
+  .optionIcon {
+    width: 20px;
+    font-size: var(--font-size-base);
+  }
+
+  .previewBox {
+    width: 24px;
+    height: 18px;
+    font-size: 9px;
+  }
+}

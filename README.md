@@ -1,341 +1,430 @@
 # PrintStack
 
-A comprehensive 3D printing inventory management system to track filaments, models, and print
-history. Built with vanilla HTML, CSS, and JavaScript.
+A comprehensive 3D printing inventory management system to track filaments, models, and print history. Built with React 18+, Vite, and modern web technologies.
 
 ![Logo](images/printstack_logo.png) ![PrintStack Interface](screenshot.png)
 
-## Features
+## 🚀 Quick Start
 
-### 📦 Enhanced Filament Library
+### Prerequisites
 
-- Track multiple filament types with detailed information (PLA, PETG, ABS, TPU, etc.)
-- **Brand tracking**: Manufacturer information for better organization
-- **Material type management**: Standardized dropdown with custom options
-- **Enhanced color system**: Hex color picker with real-time validation
-- **Diameter support**: Track 1.75mm and 2.85mm filaments separately
-- **Temperature ranges**: Record recommended printing temperatures
-- **Purchase tracking**: Date, price, and storage location
-- Monitor filament usage and remaining weight
-- Mark filaments as in-stock or out-of-stock
-- Automatic usage calculation based on print history
+- Node.js 16+ and npm 8+
+- Modern web browser (Chrome/Edge 90+, Firefox 88+, Safari 14+)
 
-### 🎨 Enhanced Models Library
+### Installation
 
-- Organize 3D models you want to print
-- **Expected usage tracking**: Specify filament consumption requirements per model
-- **Tolerance settings**: Define acceptable variance in filament usage
-- **Printability indicators**: Real-time status based on available inventory (✓✗⚠)
-- **Print settings tracking**: Layer height, infill, supports requirements
-- **Time and difficulty**: Estimated print duration and complexity rating
-- **Category organization**: Tags and categories for better model management
-- Add links to model files or notes
-- Smart filament search with autocomplete
-
-### 📊 Enhanced Print History
-
-- **Actual usage tracking**: Record real filament consumption per print
-- **Variance analysis**: Compare expected vs. actual filament usage
-- **Quality ratings**: Track print quality (Poor/Fair/Good/Excellent)
-- **Print settings log**: Record actual settings used for each print
-- **Automatic inventory updates**: Real-time deduction from filament stocks
-- **Usage patterns**: Analyze consumption trends over time
-- **Cost tracking**: Calculate material costs per print
-- Date-stamped print records
-- Edit and delete print history
-
-### 📈 Enhanced Statistics & Analytics
-
-- **Comprehensive usage reports**: Breakdown by brand, material type, and color
-- **Efficiency metrics**: Accuracy of usage estimates vs. actual consumption
-- **Cost analytics**: Material costs per print and cumulative spending
-- **Consumption trends**: Filament usage patterns over time
-- **Printability dashboard**: Real-time status of all models
-- **Variance analysis**: Track estimation accuracy improvements
-- Total filament consumed tracking
-- Print count statistics
-- Identify which models you can currently print
-
-### 💾 Enhanced Data Management
-
-- **Enhanced import/export**: Support for all new data fields and relationships
-- **Automatic migration**: Seamless upgrade from basic to enhanced tracking
-- **Data integrity**: Validation and conflict resolution during imports
-- **Backup protection**: Version tracking and rollback capabilities
-- **Duplicate detection**: Smart handling of duplicate entries
-- Local storage for data persistence
-- Merge or replace options when importing
-- No server or database required
-
-## ♿ Accessibility Features
-
-- **WCAG AA compliant**: Full accessibility support
-- **Keyboard navigation**: Complete keyboard accessibility for all features
-- **Screen reader support**: ARIA labels and announcements throughout
-- **Color contrast compliance**: Accessible color combinations with validation
-- **Focus management**: Logical tab order and visible focus indicators
-- **Text scaling**: Supports zoom up to 200% without loss of functionality
-
-## Installation
-
-1. Clone this repository:
+1. **Clone this repository:**
 
 ```bash
 git clone https://github.com/falcnor/PrintStack.git
+cd PrintStack
 ```
 
-2. Navigate to the project directory:
+2. **Install dependencies:**
 
 ```bash
-cd printstack
+npm install
 ```
 
-3. Open `index.html` in your web browser:
+3. **Start development server:**
 
 ```bash
-# On macOS
-open index.html
-
-# On Linux
-xdg-open index.html
-
-# On Windows
-start index.html
+npm run dev
 ```
 
-That's it! No build process or dependencies required.
+4. **Open your browser:**
 
-## 🚀 Enhanced Usage
+Navigate to `http://localhost:5173`
 
-### Getting Started with Enhanced Features
+That's it! The development server will hot-reload automatically as you make changes.
 
-1. **Add Enhanced Filaments**: Navigate to the Filament Library and add detailed filament
-   information including brand, material type, hex color codes, diameter, temperature ranges, and
-   purchase details.
+### Production Deployment
 
-2. **Create Models with Usage Requirements**: Go to the Models Library and specify expected filament
-   consumption, tolerance settings, print parameters, and organizational tags.
+```bash
+# Build for production
+npm run build:prod
 
-3. **Track Print History**: Use the Print History page to log completed prints with actual usage,
-   quality ratings, and print settings. Inventory updates automatically.
-
-4. **Analyze Usage Patterns**: Check the enhanced Statistics page to see comprehensive usage
-   reports, cost analytics, and efficiency metrics.
-
-### Enhanced Data Structure
-
-Data is stored locally with enhanced schema supporting all new features and maintaining backward
-compatibility. Export includes all enhanced fields:
-
-```json
-{
-  "filaments": [
-    {
-      "id": 1234567890,
-      "brand": "eSUN",
-      "materialType": "PLA",
-      "color": "Sunset Red",
-      "colorHex": "#ff6b35",
-      "weight": 1000,
-      "diameter": 1.75,
-      "temperature": {
-        "min": 190,
-        "max": 220
-      },
-      "purchaseDate": "2024-01-15",
-      "purchasePrice": 19.99,
-      "location": "Shelf A-1",
-      "notes": "Good for detailed prints",
-      "inStock": true
-    }
-  ],
-  "models": [
-    {
-      "id": 1234567891,
-      "name": "Calibration Cube",
-      "requirements": [
-        {
-          "filamentId": 1234567890,
-          "expectedWeight": 25,
-          "tolerance": 10
-        }
-      ],
-      "printTime": 120,
-      "layerHeight": 0.2,
-      "infill": 20,
-      "supportsRequired": false,
-      "difficulty": "Easy",
-      "category": "Calibration",
-      "tags": ["test", "calibration"]
-    }
-  ],
-  "prints": [
-    {
-      "id": 1234567892,
-      "modelId": 1234567891,
-      "filamentId": 1234567890,
-      "actualWeight": 26.2,
-      "date": "2024-01-20",
-      "printTime": 115,
-      "success": true,
-      "quality": "Good",
-      "settings": {
-        "layerHeight": 0.2,
-        "infill": 20,
-        "temperature": 205
-      }
-    }
-  ],
-  "exportDate": "2024-01-20T12:00:00.000Z",
-  "version": "2.0"
-}
+# Or run full deployment pipeline
+npm run deploy:build
 ```
 
-## Performance & Browser Compatibility
+The built files will be available in the `deploy/` directory.
 
-### Performance Targets
+## 📦 Features
 
-- **Form validation**: <50ms response time
-- **Data operations**: <100ms for saves and updates
-- **List rendering**: <200ms for large datasets
-- **Statistical calculations**: <500ms for analytics
+### Enhanced Filament Library
 
-### Browser Support
+- **Comprehensive tracking**: Brand, material type, hex colors, diameter, temperature ranges
+- **Purchase management**: Date, price, storage location tracking
+- **Smart inventory**: Automatic usage calculation and stock management
+- **Multi-diameter support**: 1.75mm and 2.85mm filaments
 
-PrintStack works in all modern browsers with enhanced accessibility support:
+### Advanced Models Management
 
-- **Chrome/Edge 90+**: Full feature support
-- **Firefox 88+**: Complete compatibility
-- **Safari 14+**: All features available
-- **Opera 76+**: Enhanced functionality
+- **Usage requirements**: Expected filament consumption with tolerance settings
+- **Printability indicators**: Real-time status based on available inventory (✓✗⚠)
+- **Print settings**: Layer height, infill, supports, time estimates
+- **Organization**: Categories, tags, and smart search functionality
 
-### Edge Case Handling
+### Detailed Print History
 
-- **Negative inventory prevention**: Smart warnings with user override options
-- **Duplicate detection**: Automatic identification with merge suggestions
-- **Data migration**: Seamless upgrade from previous versions
-- **Error recovery**: Graceful handling of inconsistent data
+- **Actual usage tracking**: Real filament consumption vs. estimates
+- **Quality ratings**: Poor/Fair/Good/Excellent print quality tracking
+- **Automatic inventory updates**: Real-time deduction from filament stocks
+- **Cost analysis**: Material costs per print and cumulative spending
 
-## Testing & Quality Assurance
+### Analytics & Statistics
 
-### Manual Testing Checklist
+- **Comprehensive reports**: Usage by brand, material type, and color
+- **Efficiency metrics**: Accuracy of usage estimates vs. actual consumption
+- **Consumption trends**: Filament usage patterns over time
+- **Printability dashboard**: Real-time status of all models
 
-- ✅ HTML semantic structure renders without CSS/JS
-- ✅ Mobile responsiveness on 320px screens
-- ✅ Keyboard navigation works without mouse
-- ✅ LocalStorage handles errors gracefully
-- ✅ Interactive feedback displays in <100ms
-- ✅ WCAG AA accessibility compliance
-- ✅ Cross-browser compatibility verified
-- ✅ Performance with <10,000 records tested
+## 🛠️ Development Commands
 
-### Constitution Compliances
+```bash
+# Development
+npm run dev                 # Start development server with hot reload
+npm dev                     # Alternative command
 
-- **Clean Code First**: All functions under 50 lines with single responsibility
-- **User Experience Obsession**: <100ms interactions, immediate feedback, zero data loss
-- **Progressive Enhancement**: Core functionality works without JavaScript
-- **Data Integrity**: Comprehensive validation and error handling
-- **Simplicity & Maintainability**: Vanilla web technologies, no external dependencies
+# Building
+npm run build               # Development build
+npm run build:prod          # Production build with optimizations
+npm run build:analyze       # Build with bundle analysis
+npm run build:report        # BundlePhobia-style report
 
-### File Structure
+# Preview
+npm run preview             # Preview production build
+npm run preview:prod        # Preview production build
+
+# Testing
+npm test                    # Run test suite
+npm run test:ui             # Test with UI
+npm run test:coverage       # Test with coverage report
+
+# Code Quality
+npm run lint                # Run ESLint
+npm run lint:fix            # Fix linting issues
+npm run format              # Format code with Prettier
+npm run format:check        # Check code formatting
+npm run type-check          # TypeScript type checking
+
+# Deployment
+npm run deploy:build        # Full deployment pipeline
+npm run deploy:check        # Build with analysis
+npm run clean:build         # Clean build directories
+
+# Optimization
+npm run optimize:images     # Optimize images
+npm run performance:audit   # Performance audit
+```
+
+## 🏗️ Project Structure
 
 ```
 printstack/
-├── index.html          # Main HTML structure
-├── styles.css          # All styling
-├── script.js           # Application logic
-└── README.md          # This file
+├── public/                 # Static assets
+├── src/                    # Source code
+│   ├── components/         # React components
+│   │   ├── common/         # Shared components
+│   │   ├── filament/       # Filament management
+│   │   ├── models/         # Model management
+│   │   ├── prints/         # Print history
+│   │   ├── statistics/     # Analytics
+│   │   ├── navigation/     # Navigation components
+│   │   └── theme/          # Theme system
+│   ├── contexts/           # React contexts
+│   ├── hooks/              # Custom React hooks
+│   ├── utils/              # Utility functions
+│   ├── config/             # Configuration files
+│   ├── App.jsx             # Main application component
+│   └── main.jsx            # Application entry point
+├── scripts/                # Build and deployment scripts
+│   ├── deploy.js           # Deployment pipeline
+│   ├── sync-deploy.js      # Folder synchronization
+│   ├── analyze-bundle.js   # Bundle analysis
+│   └── bundlephobia-check.js # Bundle size analysis
+├── package.json            # Dependencies and scripts
+├── vite.config.js          # Development configuration
+├── vite.prod.config.js     # Production configuration
+└── README.md               # This file
 ```
 
-### Data Format
+## ⚙️ Configuration
 
-Data is stored locally in your browser's localStorage. You can export your data as JSON:
+### Vite Development Config
 
-```json
-{
-  "filaments": [
-    {
-      "id": 1234567890,
-      "material": "PLA",
-      "color": "Red",
-      "colorHex": "#ff0000",
-      "weight": 1000,
-      "inStock": true
-    }
-  ],
-  "models": [
-    {
-      "id": 1234567891,
-      "name": "Benchy",
-      "requirements": [
-        {
-          "filamentId": 1234567890,
-          "color": "Red",
-          "material": "PLA"
-        }
-      ],
-      "link": "https://example.com/benchy"
-    }
-  ],
-  "prints": [
-    {
-      "id": 1234567892,
-      "modelName": "Benchy",
-      "color": "Red",
-      "weight": 13.5,
-      "date": "2024-01-15"
-    }
-  ],
-  "exportDate": "2024-01-15T12:00:00.000Z"
-}
+- **Fast HMR**: Instant hot module replacement
+- **Modern ES**: Full ES2020+ support
+- **Optimized deps**: Fast startup times
+- **React plugins**: JSX and React Fast Refresh
+
+### Production Optimizations
+
+- **Code splitting**: Feature-based chunk optimization
+- **Tree shaking**: Dead code elimination
+- **Minification**: ESBuild for fast, efficient minification
+- **Compression**: Gzip and Brotli asset compression
+- **Bundle analysis**: Detailed size and dependency analysis
+
+## 🚀 Deployment
+
+### Automated Deployment Pipeline
+
+```bash
+# Full production deployment
+node scripts/deploy.js
+
+# With options
+node scripts/deploy.js --skip-tests --env production --sw
 ```
 
-## Browser Compatibility
+**Features:**
+- Automated testing and linting
+- Production build optimization
+- Bundle analysis and reporting
+- Deployment manifest generation
+- Error handling and recovery
 
-PrintStack works in all modern browsers:
+### File Synchronization
 
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
-- Opera 76+
+```bash
+# Sync to deployment target
+node scripts/sync-deploy.js --target /var/www/html
 
-## Contributing
+# Watch for changes
+node scripts/sync-deploy.js --watch
+
+# Dry run preview
+node scripts/sync-deploy.js --dry-run
+```
+
+**Features:**
+- Bidirectional file synchronization
+- Backup creation and rollback
+- Real-time watching capabilities
+- Exclusion patterns and filters
+- Integrity verification with checksums
+
+## ♿ Accessibility & Performance
+
+### WCAG AA Compliance
+
+- **Color contrast**: Accessible color combinations with validation
+- **Keyboard navigation**: Complete keyboard accessibility
+- **Screen reader support**: ARIA labels and announcements
+- **Focus management**: Logical tab order and visible indicators
+- **Text scaling**: Supports 200% zoom without functionality loss
+
+### Performance Targets
+
+- **Bundle size**: <200KB raw, <50KB gzipped
+- **Interaction response**: <100ms for all UI interactions
+- **First Contentful Paint**: <1.5s on 3G connections
+- **Accessibility compliance**: WCAG AA standards
+- **Cross-browser compatibility**: Modern browser support
+
+### Responsive Design Testing
+
+Built-in responsive testing framework supports 20+ device viewports:
+
+- Mobile: iPhone SE, iPhone 12, Galaxy S20, Pixel 5
+- Tablet: iPad, iPad Pro, Surface Pro, Galaxy Tab
+- Desktop: Various breakpoints from 1280px to 2560px
+
+## 🧪 Testing & Quality Assurance
+
+### Built-in Testing Tools
+
+```bash
+# Run responsive design tests
+npm run test:responsive
+
+# Performance monitoring
+npm run test:performance
+
+# Accessibility audit
+npm run test:accessibility
+```
+
+### Progressive Enhancement
+
+- **No-JavaScript fallback**: Core functionality works without JavaScript
+- **Semantic HTML**: Meaningful structure for screen readers
+- **Graceful degradation**: Features enhance rather than replace
+- **Offline capability**: Service worker support for cached usage
+
+## 📊 Bundle Analysis & Optimization
+
+### Automated Analysis Tools
+
+1. **Bundle Size Analysis**: Detailed breakdown of file sizes and compression ratios
+2. **BundlePhobia Report**: Page load impact analysis across network conditions
+3. **Performance Monitoring**: Real-time Web Vitals collection
+4. **Optimization Suggestions**: Automated recommendations for improvement
+
+### Production Metrics
+
+- **Chunk optimization**: Feature-based code splitting
+- **Vendor separation**: React, router, and utility isolation
+- **Asset organization**: Optimized file naming and caching
+- **Source maps**: Minimal maps for production debugging
+
+## 🛠️ Technology Stack
+
+### Core Technologies
+
+- **React 18+**: Modern hooks-based component architecture
+- **Vite 4+**: Fast build tool with optimized development experience
+- **JavaScript ES2020+**: Modern JavaScript features and syntax
+- **CSS Modules**: Scoped styling with theme support
+
+### Development Tools
+
+- **ESLint**: Code quality and consistency
+- **Prettier**: Automatic code formatting
+- **Vitest**: Fast unit testing framework
+- **TypeScript**: Optional type checking support
+
+### Build & Deployment
+
+- **ESBuild**: Fast minification and tree shaking
+- **Rollup**: Advanced bundling and code splitting
+- **Compression**: Gzip and Brotli optimization
+- **Visualizer**: Interactive bundle analysis
+
+## 🔧 Advanced Configuration
+
+### Environment Variables
+
+```bash
+# .env.local
+VITE_API_BASE_URL=https://api.printstack.com
+VITE_DEBUG_MODE=true
+VITE_THEME_SYSTEM=auto
+```
+
+### Custom Build Configuration
+
+Modify `vite.prod.config.js` for custom production settings:
+
+```javascript
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: yourCustomChunkingFunction
+      }
+    }
+  }
+});
+```
+
+## 📈 Performance Monitoring
+
+### Real-time Metrics
+
+- **Web Vitals**: LCP, FID, CLS tracking
+- **Bundle analysis**: Size and compression monitoring
+- **Network performance**: Resource loading optimization
+- **User interactions**: Response time measurement
+
+### Monitoring Tools
+
+```bash
+# Performance audit
+npm run performance:audit
+
+# Bundle analysis
+npm run build:analyze
+
+# Continuous monitoring
+npm run dev:monitor
+```
+
+## 🔄 Migration from Previous Version
+
+If you're migrating from the vanilla JavaScript version:
+
+1. **Data Migration**: Existing localStorage data is automatically migrated
+2. **Feature Enhancements**: All previous features enhanced with new capabilities
+3. **API Compatibility**: Legacy data structure support maintained
+4. **Upgrade Path**: Seamless transition with zero data loss
+
+See [MIGRATION.md](./MIGRATION.md) for detailed migration instructions.
+
+## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+### Development Setup
+
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/PrintStack.git`
+3. Navigate to the project: `cd PrintStack`
+4. Install dependencies: `npm install`
+5. Create your feature branch: `git checkout -b feature/AmazingFeature`
+6. Start development: `npm run dev`
+7. Commit your changes: `git commit -m 'Add some AmazingFeature'`
+8. Push to the branch: `git push origin feature/AmazingFeature`
+9. Open a Pull Request
 
-## Roadmap
+### Code Standards
 
-- [ ] Dark mode support
+- Follow ESLint configuration
+- Use Prettier for formatting
+- Write tests for new features
+- Maintain WCAG AA accessibility
+- Keep bundle size impact in mind
+
+## 🗺️ Roadmap
+
+- [ ] PWA (Progressive Web App) support
+- [ ] Offline-first architecture
+- [ ] Cloud sync integration
 - [ ] Multi-user support
-- [ ] Cloud sync options
-- [ ] Print time estimation
-- [ ] Cost tracking per filament
-- [ ] QR code generation for filament labels
-- [ ] Mobile-responsive improvements
-- [ ] CSV export option
+- [ ] Advanced analytics dashboard
+- [ ] 3D visualization for models
+- [ ] Mobile app deployment
+- [ ] Integration with 3D printers
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the
 [LICENSE](https://github.com/falcnor/PrintStack/LICENSE) file for details.
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 - Inspired by the 3D printing community's need for better inventory management
-- Built with love for makers everywhere
+- Built with modern web technologies for optimal performance
+- Accessibility-first design for inclusive user experience
+- Performance-driven approach for fast, responsive interactions
 
-## Support
+## 📞 Support
 
 If you encounter any issues or have suggestions, please
 [open an issue](https://github.com/falcnor/PrintStack/issues).
 
+### Performance Issues
+
+For performance-related issues, please include:
+
+- Browser and version
+- Device specifications
+- Network connection speed
+- Console errors (if any)
+- Bundle size analysis output
+
+### Bug Reports
+
+When reporting bugs, please provide:
+
+- Steps to reproduce
+- Expected vs. actual behavior
+- Browser and device information
+- Screenshots if applicable
+
 ---
 
-**Made with ❤️ for the 3D printing community**
+**Made with ❤️ and React for the 3D printing community**

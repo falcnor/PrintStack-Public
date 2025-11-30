@@ -47,3 +47,51 @@ export {
   useToast,
   NOTIFICATION_TYPES
 } from './useNotifications.js';
+
+// Performance and UX hooks
+export {
+  useOptimisticUpdate,
+  useFormWithOptimism
+} from './useOptimisticUpdate.js';
+
+export {
+  useLoadingStates,
+  useProgressiveLoading,
+  useSkeletonAnimation,
+  useLoadingWithSkeleton
+} from './useLoadingStates.js';
+
+export {
+  useAnimations,
+  usePageTransitions,
+  useMicroInteractions
+} from './useAnimations.js';
+
+export {
+  useAdvancedSearch,
+  useRealTimeSearch
+} from './useAdvancedSearch.js';
+
+export {
+  useKeyboardNavigation,
+  useScreenReader,
+  useFocusTrap,
+  useTableNavigation
+} from './useKeyboardNavigation.js';
+
+export {
+  useServiceWorker,
+  useOfflineDetection
+} from './useServiceWorker.js';
+
+export {
+  useLazyLoading,
+  useMultiLazyLoading,
+  useIntersectionLazyLoad,
+  useLazyCache
+} from './useLazyLoading.js';
+
+export {
+  useImageOptimization,
+  useImageLoading
+} from './useImageOptimization.js';

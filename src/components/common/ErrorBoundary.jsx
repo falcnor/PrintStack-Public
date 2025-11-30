@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { handleComponentError, FallbackDataProvider } from '../../utils/errorHandling';
 
 import styles from './ErrorBoundary.module.css';
 
@@ -11,7 +12,13 @@ import styles from './ErrorBoundary.module.css';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorData: null,
+      recoveryAttempts: 0
+    };
   }
 
   static getDerivedStateFromError(error) {
@@ -19,19 +26,81 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    // Log error using our enhanced error handling
+    const errorData = handleComponentError(
+      error,
+      this.props.componentName || 'Unknown',
+      {
+        props: this.props,
+        errorBoundary: true
+      }
+    );
+
     this.setState({
       error,
-      errorInfo
+      errorInfo,
+      errorData,
+      recoveryAttempts: 0
     });
 
     // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
       console.error('Error caught by boundary:', error, errorInfo);
+      console.error('Error data:', errorData);
     }
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorData: null,
+      recoveryAttempts: 0
+    });
+  };
+
+  handleRecovery = () => {
+    const { recoveryAttempts } = this.state;
+
+    if (recoveryAttempts < 3) {
+      this.setState(prevState => ({
+        recoveryAttempts: prevState.recoveryAttempts + 1
+      }));
+
+      // Try recovery strategies based on error type
+      if (this.state.errorData?.category === 'storage') {
+        this.attemptStorageRecovery();
+      } else {
+        // Default recovery
+        this.handleReset();
+      }
+    } else {
+      // Max recovery attempts reached, reload page
+      window.location.reload();
+    }
+  };
+
+  attemptStorageRecovery = () => {
+    try {
+      // Clear potentially corrupted data and use fallbacks
+      const fallbackData = {
+        filaments: FallbackDataProvider.getEmptyFilamentData(),
+        models: FallbackDataProvider.getEmptyModelData(),
+        prints: FallbackDataProvider.getEmptyPrintData(),
+        statistics: FallbackDataProvider.getEmptyStatistics()
+      };
+
+      // Apply fallback data through context if available
+      if (this.context?.updateData) {
+        this.context.updateData(fallbackData);
+      }
+
+      this.handleReset();
+    } catch (recoveryError) {
+      console.error('Recovery failed:', recoveryError);
+      window.location.reload();
+    }
   };
 
   render() {
@@ -89,7 +158,9 @@ class ErrorBoundary extends React.Component {
 }
 
 ErrorBoundary.propTypes = {
-  children: PropTypes.node.isRequired
+  children: PropTypes.node.isRequired,
+  componentName: PropTypes.string,
+  fallbackComponent: PropTypes.oneOfType([PropTypes.func, PropTypes.object])
 };
 
 export default ErrorBoundary;

@@ -1,0 +1,404 @@
+/* Base skeleton styles */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #f8f8f8 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.skeleton.animate {
+  animation: skeletonLoading 1.5s infinite;
+}
+
+.skeleton:not(.animate) {
+  background: #f0f0f0;
+}
+
+@keyframes skeletonLoading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Text skeleton */
+.text {
+  height: 16px;
+  line-height: 1.5;
+}
+
+.textSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.textLine {
+  margin-bottom: 4px;
+}
+
+/* Circular skeleton for avatars and icons */
+.circular {
+  border-radius: 50%;
+}
+
+/* Rectangular skeleton for cards and elements */
+.rectangular {
+  border-radius: 4px;
+}
+
+/* Card skeleton */
+.cardSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  background-color: #fafafa;
+  max-width: 400px;
+}
+
+.cardImage {
+  border-radius: 8px 8px 0 0;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.cardTitle {
+  height: 20px;
+}
+
+.cardSubtitle {
+  height: 16px;
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* List skeleton */
+.listSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.listContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.listIcon {
+  flex-shrink: 0;
+}
+
+.listSubtitle {
+  opacity: 0.7;
+}
+
+.listBadge {
+  flex-shrink: 0;
+}
+
+/* Form skeleton */
+.formSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldLabel {
+  margin-bottom: 4px;
+}
+
+.inputField {
+  height: 36px;
+}
+
+.textareaField {
+  min-height: 80px;
+}
+
+.fieldHelper {
+  opacity: 0.7;
+  font-size: 14px;
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
+/* Dashboard skeleton */
+.dashboardSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.statsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionHeader {
+  margin-bottom: 16px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+
+.statIcon {
+  flex-shrink: 0;
+}
+
+.statContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.contentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.chartColumn,
+.tableColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chartCard,
+.tableCard {
+  padding: 16px;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      #2d2d2d 25%,
+      #3a3a3a 50%,
+      #2d2d2d 75%
+    );
+  }
+
+  .skeleton:not(.animate) {
+    background: #2d2d2d;
+  }
+
+  .cardSkeleton,
+  .statCard,
+  .chartCard,
+  .tableCard {
+    background-color: #1f1f1f;
+    border-color: #404040;
+  }
+
+  .listItem {
+    border-bottom-color: #333;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton.animate {
+    animation: none;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cardSkeleton {
+    max-width: 100%;
+  }
+
+  .listItem {
+    padding: 12px 0;
+  }
+
+  .formSkeleton {
+    padding: 16px;
+  }
+
+  .dashboardSkeleton {
+    gap: 20px;
+  }
+
+  .statCard {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cardSkeleton {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .cardActions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cardActions :global(.skeleton) {
+    width: 100% !important;
+  }
+
+  .formActions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .formActions :global(.skeleton) {
+    width: 100% !important;
+  }
+
+  .statCard {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .statsGrid {
+    gap: 12px;
+  }
+}
+
+/* Performance optimizations */
+.skeleton {
+  will-change: transform;
+  contain: layout style;
+}
+
+.skeleton.animate {
+  animation-timing-function: ease-in-out;
+}
+
+/* Accessibility improvements */
+.skeleton {
+  role: "presentation";
+  aria-hidden: "true";
+}
+
+/* Shimmer effect variant */
+.skeleton.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton.shimmer animate {
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Pulse effect variant */
+.skeleton.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Skeleton for different densities */
+.skeleton.dense {
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.skeleton.spacious {
+  gap: 12px;
+  margin-bottom: 8px;
+}
