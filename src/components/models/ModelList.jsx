@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
-import { useModels } from '../../contexts/ModelContext.js'
-import ModelTable from './ModelTable.jsx'
-import ModelForm from './ModelForm.jsx'
-import LoadingSpinner from '../common/LoadingSpinner.jsx'
-import ErrorMessage from '../common/ErrorMessage.jsx'
-import styles from './ModelList.module.css'
+import React, { useState } from 'react';
+
+import { useModels } from '../../contexts/ModelContext.js';
+import ErrorMessage from '../common/ErrorMessage.jsx';
+import LoadingSpinner from '../common/LoadingSpinner.jsx';
+
+import ModelForm from './ModelForm.jsx';
+import styles from './ModelList.module.css';
+import ModelTable from './ModelTable.jsx';
 
 const ModelList = () => {
   const {
@@ -16,89 +18,85 @@ const ModelList = () => {
     sortBy,
     categories,
     actions
-  } = useModels()
+  } = useModels();
 
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [editingModel, setEditingModel] = useState(null)
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingModel, setEditingModel] = useState(null);
 
-  const handleSearch = (e) => {
-    actions.setSearchQuery(e.target.value)
-  }
+  const handleSearch = e => {
+    actions.setSearchQuery(e.target.value);
+  };
 
-  const handleCategoryFilter = (category) => {
-    actions.setSelectedCategory(category)
-  }
+  const handleCategoryFilter = category => {
+    actions.setSelectedCategory(category);
+  };
 
-  const handleSort = (sortBy) => {
-    actions.setSortBy(sortBy)
-  }
+  const handleSort = sortBy => {
+    actions.setSortBy(sortBy);
+  };
 
   const handleAddModel = () => {
-    setEditingModel(null)
-    setShowAddForm(true)
-  }
+    setEditingModel(null);
+    setShowAddForm(true);
+  };
 
-  const handleEditModel = (model) => {
-    setEditingModel(model)
-    setShowAddForm(true)
-  }
+  const handleEditModel = model => {
+    setEditingModel(model);
+    setShowAddForm(true);
+  };
 
   const handleCloseForm = () => {
-    setShowAddForm(false)
-    setEditingModel(null)
-  }
+    setShowAddForm(false);
+    setEditingModel(null);
+  };
 
-  const handleSaveModel = (modelData) => {
-    let success
+  const handleSaveModel = modelData => {
+    let success;
     if (editingModel) {
-      success = actions.updateModel({ ...editingModel, ...modelData })
+      success = actions.updateModel({ ...editingModel, ...modelData });
     } else {
-      success = actions.addModel(modelData)
+      success = actions.addModel(modelData);
     }
 
     if (success) {
-      handleCloseForm()
-      actions.clearError()
+      handleCloseForm();
+      actions.clearError();
     }
-  }
+  };
 
-  const handleDeleteModel = (modelId) => {
-    if (window.confirm('Are you sure you want to delete this model? This will also delete all associated print history.')) {
-      actions.deleteModel(modelId)
+  const handleDeleteModel = modelId => {
+    if (
+      window.confirm(
+        'Are you sure you want to delete this model? This will also delete all associated print history.'
+      )
+    ) {
+      actions.deleteModel(modelId);
     }
-  }
+  };
 
-  const uniqueCategories = ['all', ...new Set(categories.map(cat => cat.name))]
+  const uniqueCategories = ['all', ...new Set(categories.map(cat => cat.name))];
 
   if (loading && models.length === 0) {
-    return <LoadingSpinner message="Loading models..." />
+    return <LoadingSpinner message='Loading models...' />;
   }
 
   return (
     <div className={styles.modelList}>
       <div className={styles.header}>
         <h1>Models Library</h1>
-        <button
-          className={styles.addButton}
-          onClick={handleAddModel}
-        >
+        <button className={styles.addButton} onClick={handleAddModel}>
           + Add Model
         </button>
       </div>
 
-      {error && (
-        <ErrorMessage
-          message={error}
-          onDismiss={actions.clearError}
-        />
-      )}
+      {error && <ErrorMessage message={error} onDismiss={actions.clearError} />}
 
       {/* Search and Filter Controls */}
       <div className={styles.controls}>
         <div className={styles.searchBox}>
           <input
-            type="text"
-            placeholder="Search models..."
+            type='text'
+            placeholder='Search models...'
             value={searchQuery}
             onChange={handleSearch}
             className={styles.searchInput}
@@ -107,11 +105,11 @@ const ModelList = () => {
 
         <div className={styles.filters}>
           <div className={styles.filterGroup}>
-            <label htmlFor="category-filter">Category:</label>
+            <label htmlFor='category-filter'>Category:</label>
             <select
-              id="category-filter"
+              id='category-filter'
               value={selectedCategory}
-              onChange={(e) => handleCategoryFilter(e.target.value)}
+              onChange={e => handleCategoryFilter(e.target.value)}
               className={styles.filterSelect}
             >
               {uniqueCategories.map(category => (
@@ -123,17 +121,17 @@ const ModelList = () => {
           </div>
 
           <div className={styles.filterGroup}>
-            <label htmlFor="sort-by">Sort by:</label>
+            <label htmlFor='sort-by'>Sort by:</label>
             <select
-              id="sort-by"
+              id='sort-by'
               value={sortBy}
-              onChange={(e) => handleSort(e.target.value)}
+              onChange={e => handleSort(e.target.value)}
               className={styles.filterSelect}
             >
-              <option value="name">Name</option>
-              <option value="category">Category</option>
-              <option value="difficulty">Difficulty</option>
-              <option value="printTime">Print Time</option>
+              <option value='name'>Name</option>
+              <option value='category'>Category</option>
+              <option value='difficulty'>Difficulty</option>
+              <option value='printTime'>Print Time</option>
             </select>
           </div>
         </div>
@@ -173,10 +171,7 @@ const ModelList = () => {
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h2>{editingModel ? 'Edit Model' : 'Add New Model'}</h2>
-              <button
-                className={styles.closeButton}
-                onClick={handleCloseForm}
-              >
+              <button className={styles.closeButton} onClick={handleCloseForm}>
                 ×
               </button>
             </div>
@@ -190,7 +185,7 @@ const ModelList = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default ModelList
+export default ModelList;

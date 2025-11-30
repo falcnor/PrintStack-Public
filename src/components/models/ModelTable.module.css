@@ -144,7 +144,7 @@
 }
 
 .printTime::before {
-  content: '⏱';
+  content: "⏱";
   font-size: 1rem;
 }
 
@@ -162,7 +162,7 @@
 }
 
 .requirementsCount::before {
-  content: '📦';
+  content: "📦";
   font-size: 0.9rem;
 }
 

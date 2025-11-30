@@ -1,13 +1,18 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import styles from './Header.module.css'
+import PropTypes from 'prop-types';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
+import styles from './Header.module.css';
+
+/**
+ * Application header component with navigation menu and action buttons
+ */
 const Header = () => {
   return (
     <header className={styles.header}>
       <div className={styles.container}>
         <div className={styles.logo}>
-          <Link to="/" className={styles.logoLink}>
+          <Link to='/' className={styles.logoLink}>
             <h1>PrintStack</h1>
             <span className={styles.tagline}>3D Printing Management</span>
           </Link>
@@ -16,27 +21,27 @@ const Header = () => {
         <nav className={styles.navigation}>
           <ul className={styles.navList}>
             <li>
-              <Link to="/" className={styles.navLink}>
+              <Link to='/' className={styles.navLink}>
                 Dashboard
               </Link>
             </li>
             <li>
-              <Link to="/filaments" className={styles.navLink}>
+              <Link to='/filaments' className={styles.navLink}>
                 Filaments
               </Link>
             </li>
             <li>
-              <Link to="/models" className={styles.navLink}>
+              <Link to='/models' className={styles.navLink}>
                 Models
               </Link>
             </li>
             <li>
-              <Link to="/prints" className={styles.navLink}>
+              <Link to='/prints' className={styles.navLink}>
                 Prints
               </Link>
             </li>
             <li>
-              <Link to="/settings" className={styles.navLink}>
+              <Link to='/settings' className={styles.navLink}>
                 Settings
               </Link>
             </li>
@@ -44,16 +49,19 @@ const Header = () => {
         </nav>
 
         <div className={styles.actions}>
-          <button className={styles.importBtn} aria-label="Import data">
+          <button className={styles.importBtn} aria-label='Import data'>
             📥 Import
           </button>
-          <button className={styles.exportBtn} aria-label="Export data">
+          <button className={styles.exportBtn} aria-label='Export data'>
             📤 Export
           </button>
         </div>
       </div>
     </header>
-  )
-}
+  );
+};
 
-export default Header
+// Header has no props, but defining propTypes for consistency and future expansion
+Header.propTypes = {};
+
+export default Header;

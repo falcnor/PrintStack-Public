@@ -1,0 +1,197 @@
+.advancedFilters {
+  background: #fff;
+  border: 2px solid #e1e1e1;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  line-height: 1;
+}
+
+.closeButton:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.filtersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.rangeFilter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+}
+
+.rangeInput {
+  padding: 8px 12px;
+  border: 2px solid #e1e1e1;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rangeInput:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.resetButton,
+.applyButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.resetButton {
+  background-color: #6c757d;
+  color: white;
+}
+
+.resetButton:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+.applyButton {
+  background-color: #007bff;
+  color: white;
+}
+
+.applyButton:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.toggleButton {
+  background-color: #f8f9fa;
+  border: 2px solid #e1e1e1;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  width: 100%;
+  justify-content: center;
+}
+
+.toggleButton:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.toggleButton:active {
+  transform: translateY(1px);
+}
+
+/* Compact variant */
+.advancedFilters.compact {
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.advancedFilters.compact .header {
+  margin-bottom: 12px;
+}
+
+.advancedFilters.compact .title {
+  font-size: 16px;
+}
+
+.advancedFilters.compact .filtersGrid {
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.advancedFilters.compact .resetButton,
+.advancedFilters.compact .applyButton {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+.toggleButton.compact {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .advancedFilters {
+    padding: 16px;
+  }
+
+  .filtersGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .resetButton,
+  .applyButton {
+    width: 100%;
+  }
+
+  .resetButton {
+    order: 2;
+  }
+
+  .applyButton {
+    order: 1;
+  }
+}

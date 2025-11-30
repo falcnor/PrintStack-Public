@@ -1,0 +1,122 @@
+.filterDropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+}
+
+.selectWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select {
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border: 2px solid #e1e1e1;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.select[multiple] {
+  height: auto;
+  min-height: 80px;
+  background-image: none;
+  padding: 8px 12px;
+}
+
+.clearButton {
+  position: absolute;
+  right: 36px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.clearButton:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.clearButton:active {
+  background-color: #e0e0e0;
+}
+
+/* Multiple select adjustments */
+.select[multiple] + .clearButton {
+  right: 12px;
+  top: 8px;
+  transform: none;
+}
+
+/* Compact variant */
+.filterDropdown.compact {
+  gap: 2px;
+}
+
+.filterDropdown.compact .label {
+  font-size: 12px;
+}
+
+.filterDropdown.compact .select {
+  padding: 6px 28px 6px 10px;
+  font-size: 12px;
+}
+
+.filterDropdown.compact .clearButton {
+  right: 28px;
+  width: 16px;
+  height: 16px;
+  font-size: 14px;
+}
+
+/* Small variant */
+.filterDropdown.small .select {
+  padding: 4px 24px 4px 8px;
+  font-size: 12px;
+}
+
+.filterDropdown.small .label {
+  font-size: 12px;
+}
+
+.filterDropdown.small .clearButton {
+  right: 24px;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+}

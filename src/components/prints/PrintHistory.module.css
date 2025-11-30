@@ -379,7 +379,7 @@
 }
 
 .loadingSpinner::before {
-  content: '';
+  content: "";
   display: inline-block;
   width: 20px;
   height: 20px;
@@ -432,7 +432,7 @@
 }
 
 .errorMessage::before {
-  content: '⚠️';
+  content: "⚠️";
   font-size: 1.1rem;
 }
 

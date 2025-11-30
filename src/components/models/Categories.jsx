@@ -1,74 +1,82 @@
-import React, { useState } from 'react'
-import { useModels } from '../../contexts/ModelContext.js'
-import ErrorMessage from '../common/ErrorMessage.jsx'
-import styles from './Categories.module.css'
+import React, { useState } from 'react';
+
+import { useModels } from '../../contexts/ModelContext.js';
+import ErrorMessage from '../common/ErrorMessage.jsx';
+
+import styles from './Categories.module.css';
 
 const Categories = () => {
-  const { categories, models, actions } = useModels()
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [editingCategory, setEditingCategory] = useState(null)
-  const [newCategoryName, setNewCategoryName] = useState('')
-  const [error, setError] = useState('')
+  const { categories, models, actions } = useModels();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [error, setError] = useState('');
 
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) {
-      setError('Category name is required')
-      return
+      setError('Category name is required');
+      return;
     }
 
     if (actions.addCategory(newCategoryName)) {
-      setNewCategoryName('')
-      setShowAddForm(false)
-      setError('')
+      setNewCategoryName('');
+      setShowAddForm(false);
+      setError('');
     } else {
-      setError('Failed to add category')
+      setError('Failed to add category');
     }
-  }
+  };
 
-  const handleEditCategory = (category) => {
-    setEditingCategory({ ...category })
-    setError('')
-  }
+  const handleEditCategory = category => {
+    setEditingCategory({ ...category });
+    setError('');
+  };
 
   const handleUpdateCategory = () => {
     if (!editingCategory.name.trim()) {
-      setError('Category name is required')
-      return
+      setError('Category name is required');
+      return;
     }
 
     if (actions.updateCategory(editingCategory.id, editingCategory.name)) {
-      setEditingCategory(null)
-      setError('')
+      setEditingCategory(null);
+      setError('');
     } else {
-      setError('Failed to update category')
+      setError('Failed to update category');
     }
-  }
+  };
 
-  const handleDeleteCategory = (categoryId) => {
-    const category = categories.find(c => c.id === categoryId)
-    if (!category) return
+  const handleDeleteCategory = categoryId => {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return;
 
-    const categoryModelsCount = models.filter(model => model.category === category.name).length
+    const categoryModelsCount = models.filter(
+      model => model.category === category.name
+    ).length;
 
-    if (window.confirm(
-      `Are you sure you want to delete "${category.name}"? ${categoryModelsCount > 0
-        ? `This will uncategorize ${categoryModelsCount} model(s).`
-        : 'No models are using this category.'}`
-    )) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${category.name}"? ${
+          categoryModelsCount > 0
+            ? `This will uncategorize ${categoryModelsCount} model(s).`
+            : 'No models are using this category.'
+        }`
+      )
+    ) {
       if (!actions.deleteCategory(categoryId)) {
-        setError('Failed to delete category')
+        setError('Failed to delete category');
       }
     }
-  }
+  };
 
-  const getCategoryUsage = (categoryName) => {
-    return models.filter(model => model.category === categoryName).length
-  }
+  const getCategoryUsage = categoryName => {
+    return models.filter(model => model.category === categoryName).length;
+  };
 
   const cancelEdit = () => {
-    setEditingCategory(null)
-    setError('')
-  }
+    setEditingCategory(null);
+    setError('');
+  };
 
   return (
     <div className={styles.categories}>
@@ -82,23 +90,18 @@ const Categories = () => {
         </button>
       </div>
 
-      {error && (
-        <ErrorMessage
-          message={error}
-          onDismiss={() => setError('')}
-        />
-      )}
+      {error && <ErrorMessage message={error} onDismiss={() => setError('')} />}
 
       {/* Add Category Form */}
       {showAddForm && (
         <div className={styles.addForm}>
           <div className={styles.formGroup}>
             <input
-              type="text"
+              type='text'
               value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              placeholder="New category name..."
-              onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
+              onChange={e => setNewCategoryName(e.target.value)}
+              placeholder='New category name...'
+              onKeyPress={e => e.key === 'Enter' && handleAddCategory()}
               className={styles.categoryInput}
             />
             <button
@@ -120,15 +123,20 @@ const Categories = () => {
             <p>Create your first category to organize your models.</p>
           </div>
         ) : (
-          categories.map((category) => (
+          categories.map(category => (
             <div key={category.id} className={styles.categoryItem}>
               {editingCategory?.id === category.id ? (
                 // Edit mode
                 <div className={styles.editForm}>
                   <input
-                    type="text"
+                    type='text'
                     value={editingCategory.name}
-                    onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                    onChange={e =>
+                      setEditingCategory({
+                        ...editingCategory,
+                        name: e.target.value
+                      })
+                    }
                     className={styles.categoryInput}
                   />
                   <div className={styles.editActions}>
@@ -183,15 +191,18 @@ const Categories = () => {
         <div className={styles.statistics}>
           <h3>Category Statistics</h3>
           <div className={styles.statsGrid}>
-            {categories.map((category) => {
-              const usage = getCategoryUsage(category.name)
-              const percentage = models.length > 0 ? (usage / models.length) * 100 : 0
+            {categories.map(category => {
+              const usage = getCategoryUsage(category.name);
+              const percentage =
+                models.length > 0 ? (usage / models.length) * 100 : 0;
               return (
                 <div key={category.id} className={styles.statItem}>
                   <div className={styles.statName}>{category.name}</div>
                   <div className={styles.statDetails}>
                     <span className={styles.statCount}>{usage} models</span>
-                    <span className={styles.statPercentage}>({percentage.toFixed(1)}%)</span>
+                    <span className={styles.statPercentage}>
+                      ({percentage.toFixed(1)}%)
+                    </span>
                   </div>
                   <div className={styles.progressBar}>
                     <div
@@ -200,7 +211,7 @@ const Categories = () => {
                     />
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
           <div className={styles.totalStats}>
@@ -214,7 +225,7 @@ const Categories = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Categories
+export default Categories;

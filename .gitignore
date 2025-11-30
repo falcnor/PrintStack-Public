@@ -76,6 +76,21 @@ Thumbs.db
 *.backup
 backup/
 
+# Node.js and React patterns
+node_modules/
+dist/
+build/
+*.log
+.env*
+*.local
+
+# Vite
+.vite/
+
+# Test coverage
+coverage/
+*.lcov
+
 # Misc files
 *LATEST_DEPLOYMENT*
 *IMPLEMENTATION_TEST*

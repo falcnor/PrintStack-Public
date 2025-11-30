@@ -30,7 +30,7 @@
 }
 
 .section h3::before {
-  content: '';
+  content: "";
   display: inline-block;
   width: 4px;
   height: 1.2em;
@@ -157,7 +157,7 @@
 }
 
 .modelDetails p::before {
-  content: '•';
+  content: "•";
   color: #3498db;
   font-weight: bold;
 }
@@ -224,7 +224,7 @@
 }
 
 .autoPopulateButton::before {
-  content: '🔄';
+  content: "🔄";
   font-size: 1rem;
 }
 
@@ -272,7 +272,7 @@
 }
 
 .addButton::before {
-  content: '+';
+  content: "+";
   font-size: 1.2rem;
   font-weight: 700;
 }
@@ -327,7 +327,7 @@
 }
 
 .error::before {
-  content: '⚠️';
+  content: "⚠️";
   font-size: 0.9rem;
 }
 
@@ -402,7 +402,7 @@
 }
 
 .loading::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;

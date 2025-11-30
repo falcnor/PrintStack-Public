@@ -1,6 +1,18 @@
-import React from 'react'
-import styles from './QualityRating.module.css'
+import React, { memo } from 'react';
+import PropTypes from 'prop-types';
 
+import styles from './QualityRating.module.css';
+
+/**
+ * Quality rating component for displaying and selecting print quality levels
+ * @param {Object} props - Component props
+ * @param {string} props.rating - Current quality rating value
+ * @param {boolean} props.showLabel - Whether to show quality labels
+ * @param {string} props.size - Size variant ('small', 'medium', 'large')
+ * @param {boolean} props.interactive - Whether the rating is interactive/selectable
+ * @param {Function} props.onChange - Change handler for interactive mode
+ * @param {Array} props.options - Available quality rating options
+ */
 const QualityRating = ({
   rating,
   showLabel = true,
@@ -45,15 +57,15 @@ const QualityRating = ({
       description: 'No quality rating',
       icon: '○'
     }
-  }
+  };
 
-  const config = qualityConfig[rating] || qualityConfig.none
+  const config = qualityConfig[rating] || qualityConfig.none;
 
-  const handleClick = (newRating) => {
+  const handleClick = newRating => {
     if (interactive && onChange) {
-      onChange(newRating)
+      onChange(newRating);
     }
-  }
+  };
 
   const getRatingComponent = () => {
     if (interactive) {
@@ -62,13 +74,13 @@ const QualityRating = ({
         <div className={`${styles.interactiveRating} ${styles[size]}`}>
           <div className={styles.ratingOptions}>
             {options.map(option => {
-              const optionConfig = qualityConfig[option] || qualityConfig.none
-              const isSelected = option === rating
+              const optionConfig = qualityConfig[option] || qualityConfig.none;
+              const isSelected = option === rating;
 
               return (
                 <button
                   key={option}
-                  type="button"
+                  type='button'
                   className={`${styles.ratingOption} ${isSelected ? styles.selected : ''}`}
                   onClick={() => handleClick(option)}
                   style={{
@@ -77,54 +89,73 @@ const QualityRating = ({
                   }}
                 >
                   <span className={styles.ratingIcon}>{optionConfig.icon}</span>
-                  {showLabel && <span className={styles.ratingLabel}>{optionConfig.label}</span>}
+                  {showLabel && (
+                    <span className={styles.ratingLabel}>
+                      {optionConfig.label}
+                    </span>
+                  )}
                 </button>
-              )
+              );
             })}
           </div>
         </div>
-      )
+      );
     } else {
       // Display-only rating
       return (
-        <div className={`${styles.ratingDisplay} ${styles[size]}`} style={{
-          '--rating-color': config.color,
-          '--rating-bg': config.bgColor
-        }}>
+        <div
+          className={`${styles.ratingDisplay} ${styles[size]}`}
+          style={{
+            '--rating-color': config.color,
+            '--rating-bg': config.bgColor
+          }}
+        >
           <span className={styles.ratingIcon}>{config.icon}</span>
           {showLabel && (
             <>
               <span className={styles.ratingLabel}>{config.label}</span>
-              <span className={styles.ratingDescription}>{config.description}</span>
+              <span className={styles.ratingDescription}>
+                {config.description}
+              </span>
             </>
           )}
         </div>
-      )
+      );
     }
-  }
+  };
 
   if (rating === undefined || rating === null || rating === '') {
     return (
       <div className={`${styles.noRating} ${styles[size]}`}>
         <span className={styles.ratingIcon}>{qualityConfig.none.icon}</span>
-        {showLabel && <span className={styles.ratingLabel}>{qualityConfig.none.label}</span>}
+        {showLabel && (
+          <span className={styles.ratingLabel}>{qualityConfig.none.label}</span>
+        )}
       </div>
-    )
+    );
   }
 
-  return getRatingComponent()
-}
+  return getRatingComponent();
+};
 
 // Compact rating component for use in tables
-export const CompactQualityRating = ({ rating, size = 'small', showIcon = true }) => {
+export const CompactQualityRating = ({
+  rating,
+  size = 'small',
+  showIcon = true
+}) => {
   const qualityConfig = {
     excellent: { color: '#27ae60', label: 'Excellent', icon: '⭐' },
     good: { color: '#3498db', label: 'Good', icon: '✓' },
     fair: { color: '#f39c12', label: 'Fair', icon: '⚠' },
     poor: { color: '#e74c3c', label: 'Poor', icon: '✗' }
-  }
+  };
 
-  const config = qualityConfig[rating] || { color: '#6c757d', label: 'N/A', icon: '○' }
+  const config = qualityConfig[rating] || {
+    color: '#6c757d',
+    label: 'N/A',
+    icon: '○'
+  };
 
   return (
     <div
@@ -134,30 +165,34 @@ export const CompactQualityRating = ({ rating, size = 'small', showIcon = true }
       {showIcon && <span className={styles.compactIcon}>{config.icon}</span>}
       <span className={styles.compactLabel}>{config.label}</span>
     </div>
-  )
-}
+  );
+};
 
 // Rating statistics component
-export const QualityRatingStats = ({ ratings, showPercentages = true, showCounts = true }) => {
-  const qualityOptions = ['excellent', 'good', 'fair', 'poor']
-  const total = ratings.length
+export const QualityRatingStats = ({
+  ratings,
+  showPercentages = true,
+  showCounts = true
+}) => {
+  const qualityOptions = ['excellent', 'good', 'fair', 'poor'];
+  const total = ratings.length;
 
   const stats = qualityOptions.map(option => {
-    const count = ratings.filter(r => r === option).length
-    const percentage = total > 0 ? (count / total) * 100 : 0
+    const count = ratings.filter(r => r === option).length;
+    const percentage = total > 0 ? (count / total) * 100 : 0;
     return {
       option,
       count,
       percentage
-    }
-  })
+    };
+  });
 
   const qualityConfig = {
     excellent: { color: '#27ae60', label: 'Excellent' },
     good: { color: '#3498db', label: 'Good' },
     fair: { color: '#f39c12', label: 'Fair' },
     poor: { color: '#e74c3c', label: 'Poor' }
-  }
+  };
 
   return (
     <div className={styles.ratingStats}>
@@ -168,7 +203,7 @@ export const QualityRatingStats = ({ ratings, showPercentages = true, showCounts
 
       <div className={styles.statsBars}>
         {stats.map(stat => {
-          const config = qualityConfig[stat.option]
+          const config = qualityConfig[stat.option];
           return (
             <div key={stat.option} className={styles.statBar}>
               <div className={styles.statInfo}>
@@ -197,7 +232,7 @@ export const QualityRatingStats = ({ ratings, showPercentages = true, showCounts
                 />
               </div>
             </div>
-          )
+          );
         })}
       </div>
 
@@ -207,50 +242,61 @@ export const QualityRatingStats = ({ ratings, showPercentages = true, showCounts
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
 // Quality trend component
 export const QualityTrend = ({ printHistory, timeRange = 'month' }) => {
   // Group prints by time period and calculate average quality
   const getTimeGroup = (date, range) => {
-    const d = new Date(date)
+    const d = new Date(date);
     switch (range) {
       case 'week':
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        return d.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric'
+        });
       case 'month':
-        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+        return d.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short'
+        });
       case 'year':
-        return d.getFullYear().toString()
+        return d.getFullYear().toString();
       default:
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        return d.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric'
+        });
     }
-  }
+  };
 
   const qualityScores = {
     excellent: 4,
     good: 3,
     fair: 2,
     poor: 1
-  }
+  };
 
-  const timeGroups = {}
+  const timeGroups = {};
 
   printHistory
     .filter(print => print.qualityRating && print.date)
     .forEach(print => {
-      const timeGroup = getTimeGroup(print.date, timeRange)
+      const timeGroup = getTimeGroup(print.date, timeRange);
       if (!timeGroups[timeGroup]) {
-        timeGroups[timeGroup] = []
+        timeGroups[timeGroup] = [];
       }
-      timeGroups[timeGroup].push(qualityScores[print.qualityRating] || 0)
-    })
+      timeGroups[timeGroup].push(qualityScores[print.qualityRating] || 0);
+    });
 
-  const trendData = Object.entries(timeGroups).map(([timeGroup, scores]) => ({
-    timeGroup,
-    average: scores.reduce((a, b) => a + b, 0) / scores.length,
-    count: scores.length
-  })).slice(-10) // Last 10 periods
+  const trendData = Object.entries(timeGroups)
+    .map(([timeGroup, scores]) => ({
+      timeGroup,
+      average: scores.reduce((a, b) => a + b, 0) / scores.length,
+      count: scores.length
+    }))
+    .slice(-10); // Last 10 periods
 
   return (
     <div className={styles.qualityTrend}>
@@ -265,15 +311,22 @@ export const QualityTrend = ({ printHistory, timeRange = 'month' }) => {
         <div className={styles.trendChart}>
           <div className={styles.chartContainer}>
             {trendData.map((data, index) => {
-              const quality = data.average
-              let config
-              if (quality >= 3.5) config = { color: '#27ae60', label: 'Excellent' }
-              else if (quality >= 2.5) config = { color: '#3498db', label: 'Good' }
-              else if (quality >= 1.5) config = { color: '#f39c12', label: 'Fair' }
-              else config = { color: '#e74c3c', label: 'Poor' }
+              const quality = data.average;
+              let config;
+              if (quality >= 3.5)
+                config = { color: '#27ae60', label: 'Excellent' };
+              else if (quality >= 2.5)
+                config = { color: '#3498db', label: 'Good' };
+              else if (quality >= 1.5)
+                config = { color: '#f39c12', label: 'Fair' };
+              else config = { color: '#e74c3c', label: 'Poor' };
 
               return (
-                <div key={index} className={styles.chartBar} style={{ '--bar-color': config.color }}>
+                <div
+                  key={index}
+                  className={styles.chartBar}
+                  style={{ '--bar-color': config.color }}
+                >
                   <div
                     className={styles.barFill}
                     style={{ height: `${(quality / 4) * 100}%` }}
@@ -284,25 +337,37 @@ export const QualityTrend = ({ printHistory, timeRange = 'month' }) => {
                     <div className={styles.barCount}>({data.count})</div>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
 
           <div className={styles.chartLegend}>
             <div className={styles.legendItem}>
-              <div className={styles.legendColor} style={{ background: '#27ae60' }} />
+              <div
+                className={styles.legendColor}
+                style={{ background: '#27ae60' }}
+              />
               <span>Excellent (4.0)</span>
             </div>
             <div className={styles.legendItem}>
-              <div className={styles.legendColor} style={{ background: '#3498db' }} />
+              <div
+                className={styles.legendColor}
+                style={{ background: '#3498db' }}
+              />
               <span>Good (3.0)</span>
             </div>
             <div className={styles.legendItem}>
-              <div className={styles.legendColor} style={{ background: '#f39c12' }} />
+              <div
+                className={styles.legendColor}
+                style={{ background: '#f39c12' }}
+              />
               <span>Fair (2.0)</span>
             </div>
             <div className={styles.legendItem}>
-              <div className={styles.legendColor} style={{ background: '#e74c3c' }} />
+              <div
+                className={styles.legendColor}
+                style={{ background: '#e74c3c' }}
+              />
               <span>Poor (1.0)</span>
             </div>
           </div>
@@ -313,7 +378,16 @@ export const QualityTrend = ({ printHistory, timeRange = 'month' }) => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default QualityRating
+QualityRating.propTypes = {
+  rating: PropTypes.oneOf(['excellent', 'good', 'fair', 'poor']).isRequired,
+  showLabel: PropTypes.bool,
+  size: PropTypes.oneOf(['small', 'medium', 'large']),
+  interactive: PropTypes.bool,
+  onChange: PropTypes.func,
+  options: PropTypes.arrayOf(PropTypes.string)
+};
+
+export default memo(QualityRating);

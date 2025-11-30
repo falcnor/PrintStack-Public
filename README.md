@@ -1,13 +1,14 @@
 # PrintStack
 
-A comprehensive 3D printing inventory management system to track filaments, models, and print history. Built with vanilla HTML, CSS, and JavaScript.
+A comprehensive 3D printing inventory management system to track filaments, models, and print
+history. Built with vanilla HTML, CSS, and JavaScript.
 
-![Logo](images/printstack_logo.png)
-![PrintStack Interface](screenshot.png)
+![Logo](images/printstack_logo.png) ![PrintStack Interface](screenshot.png)
 
 ## Features
 
 ### 📦 Enhanced Filament Library
+
 - Track multiple filament types with detailed information (PLA, PETG, ABS, TPU, etc.)
 - **Brand tracking**: Manufacturer information for better organization
 - **Material type management**: Standardized dropdown with custom options
@@ -20,6 +21,7 @@ A comprehensive 3D printing inventory management system to track filaments, mode
 - Automatic usage calculation based on print history
 
 ### 🎨 Enhanced Models Library
+
 - Organize 3D models you want to print
 - **Expected usage tracking**: Specify filament consumption requirements per model
 - **Tolerance settings**: Define acceptable variance in filament usage
@@ -31,6 +33,7 @@ A comprehensive 3D printing inventory management system to track filaments, mode
 - Smart filament search with autocomplete
 
 ### 📊 Enhanced Print History
+
 - **Actual usage tracking**: Record real filament consumption per print
 - **Variance analysis**: Compare expected vs. actual filament usage
 - **Quality ratings**: Track print quality (Poor/Fair/Good/Excellent)
@@ -42,6 +45,7 @@ A comprehensive 3D printing inventory management system to track filaments, mode
 - Edit and delete print history
 
 ### 📈 Enhanced Statistics & Analytics
+
 - **Comprehensive usage reports**: Breakdown by brand, material type, and color
 - **Efficiency metrics**: Accuracy of usage estimates vs. actual consumption
 - **Cost analytics**: Material costs per print and cumulative spending
@@ -53,6 +57,7 @@ A comprehensive 3D printing inventory management system to track filaments, mode
 - Identify which models you can currently print
 
 ### 💾 Enhanced Data Management
+
 - **Enhanced import/export**: Support for all new data fields and relationships
 - **Automatic migration**: Seamless upgrade from basic to enhanced tracking
 - **Data integrity**: Validation and conflict resolution during imports
@@ -63,6 +68,7 @@ A comprehensive 3D printing inventory management system to track filaments, mode
 - No server or database required
 
 ## ♿ Accessibility Features
+
 - **WCAG AA compliant**: Full accessibility support
 - **Keyboard navigation**: Complete keyboard accessibility for all features
 - **Screen reader support**: ARIA labels and announcements throughout
@@ -73,16 +79,19 @@ A comprehensive 3D printing inventory management system to track filaments, mode
 ## Installation
 
 1. Clone this repository:
+
 ```bash
 git clone https://github.com/falcnor/PrintStack.git
 ```
 
 2. Navigate to the project directory:
+
 ```bash
 cd printstack
 ```
 
 3. Open `index.html` in your web browser:
+
 ```bash
 # On macOS
 open index.html
@@ -100,17 +109,23 @@ That's it! No build process or dependencies required.
 
 ### Getting Started with Enhanced Features
 
-1. **Add Enhanced Filaments**: Navigate to the Filament Library and add detailed filament information including brand, material type, hex color codes, diameter, temperature ranges, and purchase details.
+1. **Add Enhanced Filaments**: Navigate to the Filament Library and add detailed filament
+   information including brand, material type, hex color codes, diameter, temperature ranges, and
+   purchase details.
 
-2. **Create Models with Usage Requirements**: Go to the Models Library and specify expected filament consumption, tolerance settings, print parameters, and organizational tags.
+2. **Create Models with Usage Requirements**: Go to the Models Library and specify expected filament
+   consumption, tolerance settings, print parameters, and organizational tags.
 
-3. **Track Print History**: Use the Print History page to log completed prints with actual usage, quality ratings, and print settings. Inventory updates automatically.
+3. **Track Print History**: Use the Print History page to log completed prints with actual usage,
+   quality ratings, and print settings. Inventory updates automatically.
 
-4. **Analyze Usage Patterns**: Check the enhanced Statistics page to see comprehensive usage reports, cost analytics, and efficiency metrics.
+4. **Analyze Usage Patterns**: Check the enhanced Statistics page to see comprehensive usage
+   reports, cost analytics, and efficiency metrics.
 
 ### Enhanced Data Structure
 
-Data is stored locally with enhanced schema supporting all new features and maintaining backward compatibility. Export includes all enhanced fields:
+Data is stored locally with enhanced schema supporting all new features and maintaining backward
+compatibility. Export includes all enhanced fields:
 
 ```json
 {
@@ -179,19 +194,23 @@ Data is stored locally with enhanced schema supporting all new features and main
 ## Performance & Browser Compatibility
 
 ### Performance Targets
+
 - **Form validation**: <50ms response time
 - **Data operations**: <100ms for saves and updates
 - **List rendering**: <200ms for large datasets
 - **Statistical calculations**: <500ms for analytics
 
 ### Browser Support
+
 PrintStack works in all modern browsers with enhanced accessibility support:
+
 - **Chrome/Edge 90+**: Full feature support
 - **Firefox 88+**: Complete compatibility
 - **Safari 14+**: All features available
 - **Opera 76+**: Enhanced functionality
 
 ### Edge Case Handling
+
 - **Negative inventory prevention**: Smart warnings with user override options
 - **Duplicate detection**: Automatic identification with merge suggestions
 - **Data migration**: Seamless upgrade from previous versions
@@ -200,6 +219,7 @@ PrintStack works in all modern browsers with enhanced accessibility support:
 ## Testing & Quality Assurance
 
 ### Manual Testing Checklist
+
 - ✅ HTML semantic structure renders without CSS/JS
 - ✅ Mobile responsiveness on 320px screens
 - ✅ Keyboard navigation works without mouse
@@ -210,6 +230,7 @@ PrintStack works in all modern browsers with enhanced accessibility support:
 - ✅ Performance with <10,000 records tested
 
 ### Constitution Compliances
+
 - **Clean Code First**: All functions under 50 lines with single responsibility
 - **User Experience Obsession**: <100ms interactions, immediate feedback, zero data loss
 - **Progressive Enhancement**: Core functionality works without JavaScript
@@ -272,6 +293,7 @@ Data is stored locally in your browser's localStorage. You can export your data 
 ## Browser Compatibility
 
 PrintStack works in all modern browsers:
+
 - Chrome/Edge 90+
 - Firefox 88+
 - Safari 14+
@@ -300,7 +322,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/falcnor/PrintStack/LICENSE) file for details.
+This project is licensed under the MIT License - see the
+[LICENSE](https://github.com/falcnor/PrintStack/LICENSE) file for details.
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Acknowledgments
@@ -310,7 +333,8 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 ## Support
 
-If you encounter any issues or have suggestions, please [open an issue](https://github.com/falcnor/PrintStack/issues).
+If you encounter any issues or have suggestions, please
+[open an issue](https://github.com/falcnor/PrintStack/issues).
 
 ---
 

@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import styles from './ColorPicker.module.css'
+import PropTypes from 'prop-types';
+import React, { useState, useEffect } from 'react';
+
+import styles from './ColorPicker.module.css';
 
 const PRESET_COLORS = [
   // Standard colors
@@ -33,8 +35,18 @@ const PRESET_COLORS = [
   // Translucent/Clear variants
   { name: 'Clear', hex: '#F8F8F8' },
   { name: 'Translucent', hex: '#E8E8E8' }
-]
+];
 
+/**
+ * Color picker component with preset colors and custom color support
+ * @param {Object} props - Component props
+ * @param {string} props.value - Current selected color value
+ * @param {Function} props.onChange - Callback function when color changes
+ * @param {string} props.placeholder - Placeholder text for input
+ * @param {boolean} props.allowCustom - Whether to allow custom color selection
+ * @param {boolean} props.showPreview - Whether to show color preview
+ * @param {boolean} props.compact - Whether to show compact version
+ */
 const ColorPicker = ({
   value = '',
   onChange,
@@ -43,75 +55,75 @@ const ColorPicker = ({
   showPreview = true,
   compact = false
 }) => {
-  const [selectedColor, setSelectedColor] = useState('')
-  const [customColor, setCustomColor] = useState('')
-  const [showCustomInput, setShowCustomInput] = useState(false)
+  const [selectedColor, setSelectedColor] = useState('');
+  const [customColor, setCustomColor] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   useEffect(() => {
-    setSelectedColor(value)
-  }, [value])
+    setSelectedColor(value);
+  }, [value]);
 
-  const handlePresetSelect = (color) => {
-    setSelectedColor(color.name)
+  const handlePresetSelect = color => {
+    setSelectedColor(color.name);
     if (onChange) {
-      onChange(color.name)
+      onChange(color.name);
     }
-    setShowCustomInput(false)
-  }
+    setShowCustomInput(false);
+  };
 
-  const handleCustomChange = (e) => {
-    const colorValue = e.target.value
-    setCustomColor(colorValue)
-    setSelectedColor(colorValue)
+  const handleCustomChange = e => {
+    const colorValue = e.target.value;
+    setCustomColor(colorValue);
+    setSelectedColor(colorValue);
     if (onChange) {
-      onChange(colorValue)
+      onChange(colorValue);
     }
-  }
+  };
 
-  const handleTextChange = (e) => {
-    const textValue = e.target.value
-    setSelectedColor(textValue)
+  const handleTextChange = e => {
+    const textValue = e.target.value;
+    setSelectedColor(textValue);
     if (onChange) {
-      onChange(textValue)
+      onChange(textValue);
     }
 
     // Try to find matching preset
     const matchingPreset = PRESET_COLORS.find(
       color => color.name.toLowerCase() === textValue.toLowerCase()
-    )
+    );
     if (matchingPreset) {
-      setCustomColor(matchingPreset.hex)
+      setCustomColor(matchingPreset.hex);
     }
-  }
+  };
 
   const getColorPreview = () => {
-    if (!selectedColor) return null
+    if (!selectedColor) return null;
 
     // Check if it's a preset color
-    const preset = PRESET_COLORS.find(c => c.name === selectedColor)
+    const preset = PRESET_COLORS.find(c => c.name === selectedColor);
     if (preset) {
-      return preset.hex
+      return preset.hex;
     }
 
     // Check if it's a hex color
     if (selectedColor.startsWith('#')) {
-      return selectedColor
+      return selectedColor;
     }
 
     // Check custom color if set
     if (customColor) {
-      return customColor
+      return customColor;
     }
 
     // Return default
-    return '#CCCCCC'
-  }
+    return '#CCCCCC';
+  };
 
   if (compact) {
     return (
       <div className={styles.compactPicker}>
         <input
-          type="text"
+          type='text'
           value={selectedColor}
           onChange={handleTextChange}
           placeholder={placeholder}
@@ -125,14 +137,14 @@ const ColorPicker = ({
           />
         )}
       </div>
-    )
+    );
   }
 
   return (
     <div className={styles.colorPicker}>
       <div className={styles.colorInput}>
         <input
-          type="text"
+          type='text'
           value={selectedColor}
           onChange={handleTextChange}
           placeholder={placeholder}
@@ -149,7 +161,7 @@ const ColorPicker = ({
 
       <div className={styles.presetColors}>
         <div className={styles.presetGrid}>
-          {PRESET_COLORS.map((color) => (
+          {PRESET_COLORS.map(color => (
             <button
               key={color.name}
               onClick={() => handlePresetSelect(color)}
@@ -181,16 +193,16 @@ const ColorPicker = ({
             <div className={styles.customInput}>
               <div className={styles.customRow}>
                 <input
-                  type="color"
+                  type='color'
                   value={customColor || '#000000'}
                   onChange={handleCustomChange}
                   className={styles.colorSwatch}
                 />
                 <input
-                  type="text"
+                  type='text'
                   value={customColor}
                   onChange={handleCustomChange}
-                  placeholder="#000000 or color name"
+                  placeholder='#000000 or color name'
                   className={styles.hexInput}
                 />
                 <button
@@ -207,7 +219,7 @@ const ColorPicker = ({
 
       <div className={styles.quickColors}>
         <span className={styles.quickLabel}>Quick:</span>
-        {['Red', 'Blue', 'Green', 'Yellow', 'Black', 'White'].map((color) => (
+        {['Red', 'Blue', 'Green', 'Yellow', 'Black', 'White'].map(color => (
           <button
             key={color}
             onClick={() => handleTextChange({ target: { value: color } })}
@@ -218,7 +230,16 @@ const ColorPicker = ({
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ColorPicker
+ColorPicker.propTypes = {
+  value: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+  allowCustom: PropTypes.bool,
+  showPreview: PropTypes.bool,
+  compact: PropTypes.bool
+};
+
+export default ColorPicker;

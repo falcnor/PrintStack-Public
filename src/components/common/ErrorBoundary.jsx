@@ -1,31 +1,38 @@
-import React from 'react'
-import styles from './ErrorBoundary.module.css'
+import PropTypes from 'prop-types';
+import React from 'react';
 
+import styles from './ErrorBoundary.module.css';
+
+/**
+ * React Error Boundary component that catches and displays runtime errors
+ * @class ErrorBoundary
+ * @extends React.Component
+ */
 class ErrorBoundary extends React.Component {
   constructor(props) {
-    super(props)
-    this.state = { hasError: false, error: null, errorInfo: null }
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true }
+    return { hasError: true };
   }
 
   componentDidCatch(error, errorInfo) {
     this.setState({
-      error: error,
-      errorInfo: errorInfo
-    })
+      error,
+      errorInfo
+    });
 
     // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('Error caught by boundary:', error, errorInfo)
+      console.error('Error caught by boundary:', error, errorInfo);
     }
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null })
-  }
+    this.setState({ hasError: false, error: null, errorInfo: null });
+  };
 
   render() {
     if (this.state.hasError) {
@@ -35,7 +42,8 @@ class ErrorBoundary extends React.Component {
             <div className={styles.icon}>⚠️</div>
             <h2 className={styles.title}>Something went wrong</h2>
             <p className={styles.message}>
-              We're sorry, but something unexpected happened. The application has encountered an error.
+              We're sorry, but something unexpected happened. The application
+              has encountered an error.
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
@@ -52,10 +60,7 @@ class ErrorBoundary extends React.Component {
             )}
 
             <div className={styles.actions}>
-              <button
-                onClick={this.handleReset}
-                className={styles.resetBtn}
-              >
+              <button onClick={this.handleReset} className={styles.resetBtn}>
                 Try Again
               </button>
               <button
@@ -67,9 +72,7 @@ class ErrorBoundary extends React.Component {
             </div>
 
             <div className={styles.help}>
-              <p>
-                If this problem persists, you can:
-              </p>
+              <p>If this problem persists, you can:</p>
               <ul>
                 <li>Clear your browser cache and reload</li>
                 <li>Export your data to prevent loss</li>
@@ -78,11 +81,15 @@ class ErrorBoundary extends React.Component {
             </div>
           </div>
         </div>
-      )
+      );
     }
 
-    return this.props.children
+    return this.props.children;
   }
 }
 
-export default ErrorBoundary
+ErrorBoundary.propTypes = {
+  children: PropTypes.node.isRequired
+};
+
+export default ErrorBoundary;

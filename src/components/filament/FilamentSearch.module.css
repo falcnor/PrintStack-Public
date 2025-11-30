@@ -39,7 +39,9 @@
   font-size: var(--font-size-base);
   background-color: var(--background-color);
   color: var(--text-color);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .searchInput:focus {
@@ -90,7 +92,9 @@
   font-size: var(--font-size-base);
   background-color: var(--background-color);
   color: var(--text-color);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .materialSelect:focus {

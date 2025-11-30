@@ -1,10 +1,12 @@
 /* Global CSS for PrintStack Application */
 
 /* Import CSS variables first */
-@import './variables.css';
+@import "./variables.css";
 
 /* Reset and base styles */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -23,8 +25,9 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
   line-height: var(--line-height-normal);
@@ -40,7 +43,12 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
   color: var(--text-color);
@@ -66,7 +74,8 @@ h4 {
   margin-bottom: var(--spacing-sm);
 }
 
-h5, h6 {
+h5,
+h6 {
   font-size: var(--font-size-base);
   margin-bottom: var(--spacing-sm);
 }
@@ -95,7 +104,9 @@ label {
   color: var(--text-color);
 }
 
-input, textarea, select {
+input,
+textarea,
+select {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid var(--border-color);
@@ -103,10 +114,14 @@ input, textarea, select {
   font-size: var(--font-size-base);
   background-color: var(--background-color);
   color: var(--text-color);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px var(--primary-light);
@@ -141,7 +156,8 @@ table {
   margin-bottom: var(--spacing-lg);
 }
 
-th, td {
+th,
+td {
   padding: var(--spacing-sm) var(--spacing-md);
   text-align: left;
   border-bottom: 1px solid var(--border-color);
@@ -309,7 +325,9 @@ a:focus {
     border: 2px solid var(--text-color);
   }
 
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     border: 2px solid var(--text-color);
   }
 }
@@ -335,7 +353,9 @@ a:focus {
     text-shadow: none !important;
   }
 
-  button, .actions, nav {
+  button,
+  .actions,
+  nav {
     display: none !important;
   }
 

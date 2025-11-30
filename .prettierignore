@@ -1,0 +1,55 @@
+# Build outputs
+dist/
+build/
+coverage/
+
+# Dependencies
+node_modules/
+
+# Config files
+.vite/
+.eslintrc.cjs
+.prettierrc
+
+# Git files
+.git/
+.gitignore
+
+# Environment files
+.env*
+.env.local
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Cache files
+.cache/
+.parcel-cache/
+
+# Test files
+*.test.js
+*.test.jsx
+*.test.ts
+*.test.tsx
+.coverage/
+
+# Temp files
+*.tmp
+*.temp
+*.bak
+
+# Minified files
+*.min.js
+*.min.css
+
+# Generated documentation
+docs/coverage/

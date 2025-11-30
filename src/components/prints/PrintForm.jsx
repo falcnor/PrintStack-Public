@@ -1,178 +1,158 @@
-import React, { useState, useEffect } from 'react'
-import { usePrints } from '../../contexts/PrintContext.js'
-import { useModels } from '../../contexts/ModelContext.js'
-import { useFilaments } from '../../contexts/FilamentContext.js'
-import styles from './PrintForm.module.css'
+import PropTypes from 'prop-types';
+import React, { useState, useEffect } from 'react';
 
+import { useFilaments } from '../../contexts/FilamentContext.js';
+import { useModels } from '../../contexts/ModelContext.js';
+import { usePrints } from '../../contexts/PrintContext.js';
+import { useFilamentUsage } from '../../hooks/useFilamentUsage.js';
+import FilamentUsageManager from '../common/FilamentUsageManager.jsx';
+import FormErrorDisplay from '../common/FormErrorDisplay.jsx';
+import ModelInfoDisplay from '../common/ModelInfoDisplay.jsx';
+
+import styles from './PrintForm.module.css';
+
+/**
+ * Form component for adding/editing print records
+ * @param {Object} props - Component props
+ * @param {Object} props.print - Print data for editing mode
+ * @param {Function} props.onSubmit - Form submission handler
+ * @param {Function} props.onCancel - Form cancellation handler
+ */
 const PrintForm = ({ print, onSubmit, onCancel }) => {
-  const { validatePrint } = usePrints()
-  const { models } = useModels()
-  const { filaments } = useFilaments()
+  const { validatePrint } = usePrints();
+  const { models } = useModels();
+  const { filaments } = useFilaments();
 
   // Form state
   const [formData, setFormData] = useState({
     modelId: '',
-    date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+    date: new Date().toISOString()
+      .split('T')[0], // Today's date in YYYY-MM-DD format
     qualityRating: '',
     notes: '',
-    duration: '',
-    filamentUsages: []
-  })
+    duration: ''
+  });
 
-  const [errors, setErrors] = useState([])
-  const [selectedModel, setSelectedModel] = useState(null)
+  const [errors, setErrors] = useState([]);
+  const [selectedModel, setSelectedModel] = useState(null);
+
+  // Use custom hook for filament usage management
+  const {
+    filamentUsages,
+    addFilamentUsage,
+    updateFilamentUsage,
+    removeFilamentUsage,
+    autoPopulateFromRequirements,
+    calculateTotalWeight,
+    setFilamentUsages
+  } = useFilamentUsage([]);
 
   // Initialize form data when editing
   useEffect(() => {
     if (print) {
       setFormData({
         modelId: print.modelId || '',
-        date: print.date ? print.date.split('T')[0] : new Date().toISOString().split('T')[0],
+        date: print.date
+          ? print.date.split('T')[0]
+          : new Date().toISOString()
+            .split('T')[0],
         qualityRating: print.qualityRating || '',
         notes: print.notes || '',
-        duration: print.duration || '',
-        filamentUsages: print.filamentUsages || []
-      })
+        duration: print.duration || ''
+      });
 
       if (print.modelId) {
-        const model = models.find(m => m.id === print.modelId)
-        setSelectedModel(model)
+        const model = models.find(m => m.id === print.modelId);
+        setSelectedModel(model);
+      }
+
+      if (print.filamentUsages) {
+        setFilamentUsages(print.filamentUsages);
       }
     }
-  }, [print, models])
+  }, [print, models, setFilamentUsages]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
 
     if (name === 'modelId') {
-      const model = models.find(m => m.id === value)
-      setSelectedModel(model)
+      const model = models.find(m => m.id === value);
+      setSelectedModel(model);
 
       // Auto-populate filament requirements based on model
       if (model && model.requirements) {
-        const filamentUsages = model.requirements.map(req => ({
-          id: Date.now().toString() + Math.random().toString(36).substr(2),
-          filamentId: req.filamentId,
-          materialType: req.materialType,
-          actualWeight: ''
-        }))
-        setFormData(prev => ({
-          ...prev,
-          [name]: value,
-          filamentUsages
-        }))
+        autoPopulateFromRequirements(model.requirements);
       } else {
-        setFormData(prev => ({
-          ...prev,
-          [name]: value,
-          filamentUsages: []
-        }))
+        setFilamentUsages([]);
       }
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }))
     }
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
 
     // Clear errors when user starts typing
     if (errors.length > 0) {
-      setErrors([])
+      setErrors([]);
     }
-  }
+  };
 
-  const addFilamentUsage = () => {
-    setFormData(prev => ({
-      ...prev,
-      filamentUsages: [...prev.filamentUsages, {
-        id: Date.now().toString(),
-        filamentId: '',
-        materialType: '',
-        actualWeight: ''
-      }]
-    }))
-  }
-
-  const updateFilamentUsage = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      filamentUsages: prev.filamentUsages.map((usage, i) =>
-        i === index ? { ...usage, [field]: value } : usage
-      )
-    }))
-  }
-
-  const removeFilamentUsage = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      filamentUsages: prev.filamentUsages.filter((_, i) => i !== index)
-    }))
-  }
-
-  const calculateTotalWeight = () => {
-    return formData.filamentUsages.reduce((total, usage) => {
-      const weight = parseFloat(usage.actualWeight) || 0
-      return total + weight
-    }, 0)
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleSubmit = (event) => {
+    event.preventDefault();
 
     // Process form data
     const processedData = {
       ...formData,
       duration: formData.duration ? parseFloat(formData.duration) : null,
-      filamentUsages: formData.filamentUsages.map(usage => ({
+      filamentUsages: filamentUsages.map(usage => ({
         ...usage,
         actualWeight: usage.actualWeight ? parseFloat(usage.actualWeight) : null
       }))
-    }
+    };
 
     // Validate form data
-    const validation = validatePrint(processedData)
+    const validation = validatePrint(processedData);
     if (!validation.isValid) {
-      setErrors(validation.errors)
-      return
+      setErrors(validation.errors);
+      return;
     }
 
-    onSubmit(processedData)
-  }
+    onSubmit(processedData);
+  };
 
+  // Calculate available filaments for the selected model
   const availableFilaments = selectedModel?.requirements?.map(req => {
-    const filament = filaments.find(f => f.id === req.filamentId)
+    const filament = filaments.find(f => f.id === req.filamentId);
     return {
       ...req,
       filament,
       available: filament?.inStock || false
-    }
-  }) || []
+    };
+  }) || [];
+
+  const totalWeight = calculateTotalWeight();
 
   return (
     <form onSubmit={handleSubmit} className={styles.printForm}>
-      {errors.length > 0 && (
-        <div className={styles.errors}>
-          {errors.map((error, index) => (
-            <div key={index} className={styles.error}>{error}</div>
-          ))}
-        </div>
-      )}
+      {/* Error Display */}
+      <FormErrorDisplay errors={errors} />
 
       {/* Model Selection */}
       <div className={styles.section}>
         <h3>Print Information</h3>
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
-            <label htmlFor="modelId">Model *</label>
+            <label htmlFor='modelId'>Model *</label>
             <select
-              id="modelId"
-              name="modelId"
+              id='modelId'
+              name='modelId'
               value={formData.modelId}
               onChange={handleInputChange}
               required
               className={styles.modelSelect}
             >
-              <option value="">Select a model...</option>
+              <option value=''>Select a model...</option>
               {models.map(model => (
                 <option key={model.id} value={model.id}>
                   {model.name} ({model.category})
@@ -182,30 +162,24 @@ const PrintForm = ({ print, onSubmit, onCancel }) => {
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="date">Print Date *</label>
+            <label htmlFor='date'>Print Date *</label>
             <input
-              type="date"
-              id="date"
-              name="date"
+              type='date'
+              id='date'
+              name='date'
               value={formData.date}
               onChange={handleInputChange}
               required
-              max={new Date().toISOString().split('T')[0]} // Cannot select future dates
+              max={new Date().toISOString()
+                .split('T')[0]}
             />
           </div>
         </div>
 
-        {selectedModel && (
-          <div className={styles.modelInfo}>
-            <h4>Model Information</h4>
-            <div className={styles.modelDetails}>
-              <p><strong>Category:</strong> {selectedModel.category}</p>
-              <p><strong>Difficulty:</strong> {selectedModel.difficulty}</p>
-              <p><strong>Estimated Time:</strong> {selectedModel.printTime} minutes</p>
-              <p><strong>Can Print:</strong> {availableFilaments.every(f => f.available) ? '✓ Yes' : '✗ No, missing filament'}</p>
-            </div>
-          </div>
-        )}
+        <ModelInfoDisplay
+          model={selectedModel}
+          availableFilaments={availableFilaments}
+        />
       </div>
 
       {/* Print Quality */}
@@ -213,187 +187,97 @@ const PrintForm = ({ print, onSubmit, onCancel }) => {
         <h3>Print Quality</h3>
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
-            <label htmlFor="qualityRating">Quality Rating</label>
+            <label htmlFor='qualityRating'>Quality Rating</label>
             <select
-              id="qualityRating"
-              name="qualityRating"
+              id='qualityRating'
+              name='qualityRating'
               value={formData.qualityRating}
               onChange={handleInputChange}
             >
-              <option value="">Select quality...</option>
-              <option value="excellent">Excellent - Perfect print</option>
-              <option value="good">Good - Minor issues</option>
-              <option value="fair">Fair - Noticeable flaws</option>
-              <option value="poor">Poor - Major issues failed</option>
+              <option value=''>Select quality...</option>
+              <option value='excellent'>Excellent - Perfect print</option>
+              <option value='good'>Good - Minor issues</option>
+              <option value='fair'>Fair - Noticeable flaws</option>
+              <option value='poor'>Poor - Major issues failed</option>
             </select>
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="duration">Actual Print Time (hours)</label>
+            <label htmlFor='duration'>Actual Print Time (hours)</label>
             <input
-              type="number"
-              id="duration"
-              name="duration"
+              type='number'
+              id='duration'
+              name='duration'
               value={formData.duration}
               onChange={handleInputChange}
-              min="0"
-              step="0.1"
-              placeholder="2.5"
+              min='0'
+              step='0.1'
+              placeholder='2.5'
             />
           </div>
         </div>
       </div>
 
       {/* Filament Usages */}
-      <div className={styles.section}>
-        <h3>Filament Usages</h3>
-        {formData.filamentUsages.length === 0 ? (
-          <div className={styles.noFilaments}>
-            <p>No filament usages added</p>
-            {availableFilaments.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  const usages = availableFilaments.map(req => ({
-                    id: Date.now().toString() + Math.random().toString(36).substr(2),
-                    filamentId: req.filamentId,
-                    materialType: req.materialType,
-                    actualWeight: ''
-                  }))
-                  setFormData(prev => ({ ...prev, filamentUsages: usages }))
-                }}
-                className={styles.autoPopulateButton}
-              >
-                Auto-populate from Model Requirements
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className={styles.filamentUsages}>
-            {formData.filamentUsages.map((usage, index) => {
-              const filament = availableFilaments.find(f => f.filamentId === usage.filamentId)?.filament
-              return (
-                <div key={usage.id} className={styles.filamentUsage}>
-                  <div className={styles.formRow}>
-                    <div className={styles.formGroup}>
-                      <label>Filament *</label>
-                      <select
-                        value={usage.filamentId}
-                        onChange={(e) => updateFilamentUsage(index, 'filamentId', e.target.value)}
-                        required
-                      >
-                        <option value="">Select Filament...</option>
-                        {availableFilaments.map(req => (
-                          <option
-                            key={req.filamentId}
-                            value={req.filamentId}
-                            disabled={!req.available}
-                            className={!req.available ? styles.disabled : ''}
-                          >
-                            {req.filament ? (
-                              `${req.filament.colorName || req.filament.color} (${req.materialType}) - ${req.filament.brand}`
-                            ) : (
-                              `${req.materialType} - Not Available`
-                            )}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className={styles.formGroup}>
-                      <label>Material Type *</label>
-                      <input
-                        type="text"
-                        value={usage.materialType}
-                        onChange={(e) => updateFilamentUsage(index, 'materialType', e.target.value)}
-                        placeholder="PLA, PETG, etc."
-                        required
-                      />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                      <label>Actual Weight (g) *</label>
-                      <input
-                        type="number"
-                        value={usage.actualWeight}
-                        onChange={(e) => updateFilamentUsage(index, 'actualWeight', e.target.value)}
-                        min="0"
-                        step="0.1"
-                        placeholder="10.5"
-                        required
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => removeFilamentUsage(index)}
-                      className={styles.removeButton}
-                    >
-                      Remove
-                    </button>
-                  </div>
-
-                  {filament && (
-                    <div className={styles.filamentInfo}>
-                      <span className={styles.filamentDetails}>
-                        {filament.colorName || filament.color} ({filament.materialType}) - {filament.brand}
-                      </span>
-                      {filament.weight && (
-                        <span className={styles.remainingWeight}>
-                          {filament.weight}g available
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={addFilamentUsage}
-          className={styles.addButton}
-        >
-          + Add Filament Usage
-        </button>
-
-        {/* Total Weight Display */}
-        {formData.filamentUsages.length > 0 && (
-          <div className={styles.totalWeight}>
-            <strong>Total Weight Used:</strong> {calculateTotalWeight().toFixed(1)}g
-          </div>
-        )}
-      </div>
+      <FilamentUsageManager
+        filamentUsages={filamentUsages}
+        availableFilaments={availableFilaments}
+        onAddFilament={addFilamentUsage}
+        onUpdateFilament={updateFilamentUsage}
+        onRemoveFilament={removeFilamentUsage}
+        onAutoPopulate={() => {
+          if (selectedModel?.requirements) {
+            autoPopulateFromRequirements(selectedModel.requirements);
+          }
+        }}
+        totalWeight={totalWeight}
+      />
 
       {/* Additional Notes */}
       <div className={styles.section}>
         <h3>Additional Notes</h3>
         <div className={styles.formGroup}>
-          <label htmlFor="notes">Print Notes</label>
+          <label htmlFor='notes'>Print Notes</label>
           <textarea
-            id="notes"
-            name="notes"
+            id='notes'
+            name='notes'
             value={formData.notes}
             onChange={handleInputChange}
-            rows="3"
-            placeholder="Notes about print settings, issues, or observations"
+            rows='3'
+            placeholder='Notes about print settings, issues, or observations'
           />
         </div>
       </div>
 
       {/* Form Actions */}
       <div className={styles.actions}>
-        <button type="button" onClick={onCancel} className={styles.cancelButton}>
+        <button
+          type='button'
+          onClick={onCancel}
+          className={styles.cancelButton}
+        >
           Cancel
         </button>
-        <button type="submit" className={styles.submitButton}>
+        <button type='submit' className={styles.submitButton}>
           {print ? 'Update Print' : 'Record Print'}
         </button>
       </div>
     </form>
-  )
-}
+  );
+};
 
-export default PrintForm
+PrintForm.propTypes = {
+  print: PropTypes.shape({
+    id: PropTypes.string,
+    modelId: PropTypes.string,
+    date: PropTypes.string,
+    qualityRating: PropTypes.string,
+    notes: PropTypes.string,
+    duration: PropTypes.number,
+    filamentUsages: PropTypes.array
+  }),
+  onSubmit: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired
+};
+
+export default PrintForm;

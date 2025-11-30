@@ -1,116 +1,136 @@
-import React, { useState, useEffect } from 'react'
-import { useApp } from '../../contexts/AppContext.jsx'
-import FilamentTable from './FilamentTable.jsx'
-import FilamentForm from './FilamentForm.jsx'
-import FilamentSearch from './FilamentSearch.jsx'
-import FilamentImportExport from './FilamentImportExport.jsx'
-import LoadingSpinner from '../common/LoadingSpinner.jsx'
-import styles from './FilamentList.module.css'
+import React, { useState, useEffect } from 'react';
+
+import { useApp } from '../../contexts/AppContext.jsx';
+import LoadingSpinner from '../common/LoadingSpinner.jsx';
+
+import FilamentForm from './FilamentForm.jsx';
+import FilamentImportExport from './FilamentImportExport.jsx';
+import styles from './FilamentList.module.css';
+import FilamentSearch from './FilamentSearch.jsx';
+import FilamentTable from './FilamentTable.jsx';
 
 const FilamentList = () => {
-  const { filaments, loading, error, addFilament, updateFilament, deleteFilament } = useApp()
-  const [showForm, setShowForm] = useState(false)
-  const [editingFilament, setEditingFilament] = useState(null)
-  const [filteredFilaments, setFilteredFilaments] = useState([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterMaterial, setFilterMaterial] = useState('')
-  const [showImportExport, setShowImportExport] = useState(false)
+  const {
+    filaments,
+    loading,
+    error,
+    addFilament,
+    updateFilament,
+    deleteFilament
+  } = useApp();
+  const [showForm, setShowForm] = useState(false);
+  const [editingFilament, setEditingFilament] = useState(null);
+  const [filteredFilaments, setFilteredFilaments] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterMaterial, setFilterMaterial] = useState('');
+  const [showImportExport, setShowImportExport] = useState(false);
 
   useEffect(() => {
-    let filtered = filaments
+    let filtered = filaments;
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(filament =>
-        filament.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        filament.material.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (filament.color && filament.color.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
+      filtered = filtered.filter(
+        filament =>
+          filament.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          filament.material.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (filament.color &&
+            filament.color.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
     }
 
     // Apply material filter
     if (filterMaterial) {
-      filtered = filtered.filter(filament => filament.material === filterMaterial)
+      filtered = filtered.filter(
+        filament => filament.material === filterMaterial
+      );
     }
 
-    setFilteredFilaments(filtered)
-  }, [filaments, searchTerm, filterMaterial])
+    setFilteredFilaments(filtered);
+  }, [filaments, searchTerm, filterMaterial]);
 
   const handleAddFilament = () => {
-    setEditingFilament(null)
-    setShowForm(true)
-  }
+    setEditingFilament(null);
+    setShowForm(true);
+  };
 
-  const handleEditFilament = (filament) => {
-    setEditingFilament(filament)
-    setShowForm(true)
-  }
+  const handleEditFilament = filament => {
+    setEditingFilament(filament);
+    setShowForm(true);
+  };
 
-  const handleDeleteFilament = async (id) => {
+  const handleDeleteFilament = async id => {
     if (window.confirm('Are you sure you want to delete this filament?')) {
       try {
-        await deleteFilament(id)
+        await deleteFilament(id);
       } catch (error) {
-        console.error('Failed to delete filament:', error)
+        console.error('Failed to delete filament:', error);
       }
     }
-  }
+  };
 
-  const handleFormSubmit = async (formData) => {
-    console.log('handleFormSubmit called with:', formData, 'editingFilament:', editingFilament)
+  const handleFormSubmit = async formData => {
+    console.log(
+      'handleFormSubmit called with:',
+      formData,
+      'editingFilament:',
+      editingFilament
+    );
     try {
       if (editingFilament) {
-        console.log('Updating existing filament')
-        await updateFilament({ ...formData, id: editingFilament.id })
+        console.log('Updating existing filament');
+        await updateFilament({ ...formData, id: editingFilament.id });
       } else {
-        console.log('Adding new filament')
-        await addFilament(formData)
+        console.log('Adding new filament');
+        await addFilament(formData);
       }
-      console.log('Filament saved successfully')
-      setShowForm(false)
-      setEditingFilament(null)
+      console.log('Filament saved successfully');
+      setShowForm(false);
+      setEditingFilament(null);
     } catch (error) {
-      console.error('Failed to save filament:', error)
+      console.error('Failed to save filament:', error);
     }
-  }
+  };
 
   const handleFormCancel = () => {
-    setShowForm(false)
-    setEditingFilament(null)
-  }
+    setShowForm(false);
+    setEditingFilament(null);
+  };
 
   const handleSearch = (term, material) => {
-    setSearchTerm(term)
-    setFilterMaterial(material)
-  }
+    setSearchTerm(term);
+    setFilterMaterial(material);
+  };
 
-  const handleImport = async (validFilaments, invalidFilaments) => {
+  const handleImport = async(validFilaments, invalidFilaments) => {
     try {
       // Add valid filaments
       for (const filament of validFilaments) {
-        await addFilament(filament)
+        await addFilament(filament);
       }
 
       // Show success message
-      console.log(`Imported ${validFilaments.length} filaments successfully`)
+      console.log(`Imported ${validFilaments.length} filaments successfully`);
       if (invalidFilaments.length > 0) {
-        console.warn(`${invalidFilaments.length} filaments had errors and were not imported`)
+        console.warn(
+          `${invalidFilaments.length} filaments had errors and were not imported`
+        );
       }
     } catch (error) {
-      console.error('Import failed:', error)
+      console.error('Import failed:', error);
     }
-  }
+  };
 
-  const handleExport = (count) => {
-    console.log(`Exported ${count} filaments`)
-  }
+  const handleExport = count => {
+    console.log(`Exported ${count} filaments`);
+  };
 
   const getUniqueMaterials = () => {
-    return [...new Set(filaments.map(f => f.material))].sort()
-  }
+    return [...new Set(filaments.map(f => f.material))].sort();
+  };
 
   if (loading && filaments.length === 0) {
-    return <LoadingSpinner message="Loading filaments..." />
+    return <LoadingSpinner message='Loading filaments...' />;
   }
 
   return (
@@ -121,14 +141,14 @@ const FilamentList = () => {
           <button
             onClick={handleAddFilament}
             className={styles.addButton}
-            aria-label="Add new filament"
+            aria-label='Add new filament'
           >
             + Add Filament
           </button>
           <button
             onClick={() => setShowImportExport(!showImportExport)}
             className={styles.importExportButton}
-            aria-label="Toggle import/export panel"
+            aria-label='Toggle import/export panel'
           >
             📤 Import/Export
           </button>
@@ -136,7 +156,7 @@ const FilamentList = () => {
       </div>
 
       {error && (
-        <div className={styles.error} role="alert">
+        <div className={styles.error} role='alert'>
           Error: {error}
         </div>
       )}
@@ -148,10 +168,7 @@ const FilamentList = () => {
       />
 
       {showImportExport && (
-        <FilamentImportExport
-          onImport={handleImport}
-          onExport={handleExport}
-        />
+        <FilamentImportExport onImport={handleImport} onExport={handleExport} />
       )}
 
       {showForm ? (
@@ -184,10 +201,7 @@ const FilamentList = () => {
               : 'Get started by adding your first filament.'}
           </p>
           {!searchTerm && !filterMaterial && (
-            <button
-              onClick={handleAddFilament}
-              className={styles.addButton}
-            >
+            <button onClick={handleAddFilament} className={styles.addButton}>
               + Add Your First Filament
             </button>
           )}
@@ -200,7 +214,7 @@ const FilamentList = () => {
         </span>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default FilamentList
+export default FilamentList;

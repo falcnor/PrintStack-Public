@@ -23,7 +23,7 @@ const testFilaments = [
     color: 'Black',
     weight: 1000,
     remainingWeight: 1000,
-    cost: 22.50,
+    cost: 22.5,
     diameter: '1.75',
     temperature: 240,
     notes: 'Strong and durable filament',
@@ -37,14 +37,14 @@ const testFilaments = [
     color: 'Red',
     weight: 500,
     remainingWeight: 300,
-    cost: 35.00,
+    cost: 35.0,
     diameter: '1.75',
     temperature: 220,
     notes: 'Flexible filament for phone cases and flexible parts',
     createdAt: '2024-01-05T09:15:00.000Z',
     updatedAt: '2024-01-05T09:15:00.000Z'
   }
-]
+];
 
 const testModels = [
   {
@@ -71,7 +71,7 @@ const testModels = [
     createdAt: '2024-01-08T16:20:00.000Z',
     updatedAt: '2024-01-08T16:20:00.000Z'
   }
-]
+];
 
 const testPrints = [
   {
@@ -101,7 +101,7 @@ const testPrints = [
     createdAt: '2024-01-21T14:00:00.000Z',
     updatedAt: '2024-01-21T14:00:00.000Z'
   }
-]
+];
 
 const testSettings = {
   theme: 'light',
@@ -110,17 +110,19 @@ const testSettings = {
   language: 'en',
   autoSave: true,
   notifications: true
-}
+};
 
 // Save test data to localStorage
-localStorage.setItem('printstack_filaments', JSON.stringify(testFilaments))
-localStorage.setItem('printstack_models', JSON.stringify(testModels))
-localStorage.setItem('printstack_prints', JSON.stringify(testPrints))
-localStorage.setItem('printstack_settings', JSON.stringify(testSettings))
+localStorage.setItem('printstack_filaments', JSON.stringify(testFilaments));
+localStorage.setItem('printstack_models', JSON.stringify(testModels));
+localStorage.setItem('printstack_prints', JSON.stringify(testPrints));
+localStorage.setItem('printstack_settings', JSON.stringify(testSettings));
 
-console.log('Test data loaded!')
-console.log(`${testFilaments.length} filaments, ${testModels.length} models, ${testPrints.length} prints added`)
-console.log('Refresh the React app to see migrated data')
+console.log('Test data loaded!');
+console.log(
+  `${testFilaments.length} filaments, ${testModels.length} models, ${testPrints.length} prints added`
+);
+console.log('Refresh the React app to see migrated data');
 
 // Export functions to browser console for testing
 window.PrintStackTestData = {
@@ -129,10 +131,10 @@ window.PrintStackTestData = {
   prints: testPrints,
   settings: testSettings,
   clear: () => {
-    localStorage.removeItem('printstack_filaments')
-    localStorage.removeItem('printstack_models')
-    localStorage.removeItem('printstack_prints')
-    localStorage.removeItem('printstack_settings')
-    console.log('Test data cleared')
+    localStorage.removeItem('printstack_filaments');
+    localStorage.removeItem('printstack_models');
+    localStorage.removeItem('printstack_prints');
+    localStorage.removeItem('printstack_settings');
+    console.log('Test data cleared');
   }
-}
+};

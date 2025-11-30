@@ -1,0 +1,58 @@
+.loadingContainer {
+  width: 100%;
+}
+
+.skeletonTable {
+  width: 100%;
+}
+
+.skeletonHeader {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e1e1e1;
+}
+
+.skeletonRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.skeletonCell {
+  height: 16px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .skeletonHeader {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .skeletonRow {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .skeletonCell {
+    height: 14px;
+  }
+}

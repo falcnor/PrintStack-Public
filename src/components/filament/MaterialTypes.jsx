@@ -1,84 +1,157 @@
-import React, { useState, useEffect } from 'react'
-import styles from './MaterialTypes.module.css'
+import React, { useState, useEffect, useMemo } from 'react';
+import PropTypes from 'prop-types';
+import { memo } from 'react';
+
+import styles from './MaterialTypes.module.css';
 
 const DEFAULT_MATERIALS = [
-  { name: 'PLA', description: 'Easy to print, low warping', temperature: '190-220°C', colors: 'Wide variety' },
-  { name: 'PETG', description: 'Strong and durable, chemical resistant', temperature: '230-250°C', colors: 'Wide variety' },
-  { name: 'ABS', description: 'Very strong, high temp resistance', temperature: '230-260°C', colors: 'Wide variety' },
-  { name: 'TPU', description: 'Flexible, rubber-like', temperature: '210-230°C', colors: 'Limited' },
-  { name: 'Wood', description: 'Wood-like appearance, sandable', temperature: '190-220°C', colors: 'Wood tones' },
-  { name: 'Carbon Fiber', description: 'Reinforced, very stiff', temperature: '200-240°C', colors: 'Black/Grey' },
-  { name: 'Metal', description: 'Metallic appearance, heavy', temperature: '200-230°C', colors: 'Metallic' },
-  { name: 'Silk', description: 'Shiny, iridescent finish', temperature: '190-220°C', colors: 'Pearlescent' },
-  { name: 'Glow', description: 'Glows in the dark', temperature: '190-220°C', colors: 'Neon' },
-  { name: 'Other', description: 'Custom or specialty materials', temperature: 'Varies', colors: 'Various' }
-]
+  {
+    name: 'PLA',
+    description: 'Easy to print, low warping',
+    temperature: '190-220°C',
+    colors: 'Wide variety'
+  },
+  {
+    name: 'PETG',
+    description: 'Strong and durable, chemical resistant',
+    temperature: '230-250°C',
+    colors: 'Wide variety'
+  },
+  {
+    name: 'ABS',
+    description: 'Very strong, high temp resistance',
+    temperature: '230-260°C',
+    colors: 'Wide variety'
+  },
+  {
+    name: 'TPU',
+    description: 'Flexible, rubber-like',
+    temperature: '210-230°C',
+    colors: 'Limited'
+  },
+  {
+    name: 'Wood',
+    description: 'Wood-like appearance, sandable',
+    temperature: '190-220°C',
+    colors: 'Wood tones'
+  },
+  {
+    name: 'Carbon Fiber',
+    description: 'Reinforced, very stiff',
+    temperature: '200-240°C',
+    colors: 'Black/Grey'
+  },
+  {
+    name: 'Metal',
+    description: 'Metallic appearance, heavy',
+    temperature: '200-230°C',
+    colors: 'Metallic'
+  },
+  {
+    name: 'Silk',
+    description: 'Shiny, iridescent finish',
+    temperature: '190-220°C',
+    colors: 'Pearlescent'
+  },
+  {
+    name: 'Glow',
+    description: 'Glows in the dark',
+    temperature: '190-220°C',
+    colors: 'Neon'
+  },
+  {
+    name: 'Other',
+    description: 'Custom or specialty materials',
+    temperature: 'Varies',
+    colors: 'Various'
+  }
+];
 
-const MaterialTypes = ({ selectedMaterial, onMaterialChange, showInfo = false }) => {
-  const [materials, setMaterials] = useState([])
-  const [customMaterials, setCustomMaterials] = useState([])
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [newMaterial, setNewMaterial] = useState({ name: '', description: '', temperature: '', colors: '' })
+/**
+ * Material types management component for filament materials
+ * @param {Object} props - Component props
+ * @param {string} props.selectedMaterial - Currently selected material
+ * @param {Function} props.onMaterialChange - Change handler for material selection
+ * @param {boolean} props.showInfo - Whether to show material information panel
+ */
+const MaterialTypes = ({
+  selectedMaterial,
+  onMaterialChange,
+  showInfo = false
+}) => {
+  const [customMaterials, setCustomMaterials] = useState([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newMaterial, setNewMaterial] = useState({
+    name: '',
+    description: '',
+    temperature: '',
+    colors: ''
+  });
 
   useEffect(() => {
     // Load custom materials from localStorage
-    const stored = localStorage.getItem('printstack_custom_materials')
+    const stored = localStorage.getItem('printstack_custom_materials');
     if (stored) {
       try {
-        setCustomMaterials(JSON.parse(stored))
+        setCustomMaterials(JSON.parse(stored));
       } catch (error) {
-        console.error('Failed to load custom materials:', error)
+        console.error('Failed to load custom materials:', error);
       }
     }
-  }, [])
+  }, []);
 
-  useEffect(() => {
-    // Combine default and custom materials
-    setMaterials([...DEFAULT_MATERIALS, ...customMaterials])
-  }, [customMaterials])
+  const materials = useMemo(() => {
+    return [...DEFAULT_MATERIALS, ...customMaterials];
+  }, [customMaterials]);
 
   const handleAddMaterial = () => {
-    if (!newMaterial.name.trim()) return
+    if (!newMaterial.name.trim()) return;
 
     const materialToAdd = {
       name: newMaterial.name.trim(),
       description: newMaterial.description.trim() || 'Custom material',
       temperature: newMaterial.temperature.trim() || 'Varies',
       colors: newMaterial.colors.trim() || 'Various'
-    }
+    };
 
-    const updatedCustom = [...customMaterials, materialToAdd]
-    setCustomMaterials(updatedCustom)
-    localStorage.setItem('printstack_custom_materials', JSON.stringify(updatedCustom))
+    const updatedCustom = [...customMaterials, materialToAdd];
+    setCustomMaterials(updatedCustom);
+    localStorage.setItem(
+      'printstack_custom_materials',
+      JSON.stringify(updatedCustom)
+    );
 
     // Reset form
-    setNewMaterial({ name: '', description: '', temperature: '', colors: '' })
-    setShowAddForm(false)
+    setNewMaterial({ name: '', description: '', temperature: '', colors: '' });
+    setShowAddForm(false);
 
     // Select the newly added material
     if (onMaterialChange) {
-      onMaterialChange(materialToAdd.name)
+      onMaterialChange(materialToAdd.name);
     }
-  }
+  };
 
-  const handleDeleteCustomMaterial = (materialName) => {
-    const updated = customMaterials.filter(m => m.name !== materialName)
-    setCustomMaterials(updated)
-    localStorage.setItem('printstack_custom_materials', JSON.stringify(updated))
+  const handleDeleteCustomMaterial = materialName => {
+    const updated = customMaterials.filter(m => m.name !== materialName);
+    setCustomMaterials(updated);
+    localStorage.setItem(
+      'printstack_custom_materials',
+      JSON.stringify(updated)
+    );
 
     // If this was the selected material, clear selection
     if (selectedMaterial === materialName && onMaterialChange) {
-      onMaterialChange('PLA')
+      onMaterialChange('PLA');
     }
-  }
+  };
 
-  const getDefaultMaterialInfo = (materialName) => {
-    const material = materials.find(m => m.name === materialName)
-    return material || DEFAULT_MATERIALS.find(m => m.name === 'PLA')
-  }
+  const getDefaultMaterialInfo = materialName => {
+    const material = materials.find(m => m.name === materialName);
+    return material || DEFAULT_MATERIALS.find(m => m.name === 'PLA');
+  };
 
   if (showInfo && selectedMaterial) {
-    const materialInfo = getDefaultMaterialInfo(selectedMaterial)
+    const materialInfo = getDefaultMaterialInfo(selectedMaterial);
     return (
       <div className={styles.materialInfo}>
         <h4>{selectedMaterial}</h4>
@@ -92,7 +165,7 @@ const MaterialTypes = ({ selectedMaterial, onMaterialChange, showInfo = false })
           </span>
         </div>
       </div>
-    )
+    );
   }
 
   if (!onMaterialChange) {
@@ -124,9 +197,11 @@ const MaterialTypes = ({ selectedMaterial, onMaterialChange, showInfo = false })
                     <div className={styles.customHeader}>
                       <h5>{material.name}</h5>
                       <button
-                        onClick={() => handleDeleteCustomMaterial(material.name)}
+                        onClick={() =>
+                          handleDeleteCustomMaterial(material.name)
+                        }
                         className={styles.deleteButton}
-                        title="Remove custom material"
+                        title='Remove custom material'
                       >
                         ×
                       </button>
@@ -153,37 +228,54 @@ const MaterialTypes = ({ selectedMaterial, onMaterialChange, showInfo = false })
               <h4>Add Custom Material</h4>
               <div className={styles.formRow}>
                 <input
-                  type="text"
-                  placeholder="Material name *"
+                  type='text'
+                  placeholder='Material name *'
                   value={newMaterial.name}
-                  onChange={(e) => setNewMaterial(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={e =>
+                    setNewMaterial(prev => ({ ...prev, name: e.target.value }))
+                  }
                   className={styles.input}
                 />
               </div>
               <div className={styles.formRow}>
                 <input
-                  type="text"
-                  placeholder="Description"
+                  type='text'
+                  placeholder='Description'
                   value={newMaterial.description}
-                  onChange={(e) => setNewMaterial(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={e =>
+                    setNewMaterial(prev => ({
+                      ...prev,
+                      description: e.target.value
+                    }))
+                  }
                   className={styles.input}
                 />
               </div>
               <div className={styles.formRow}>
                 <input
-                  type="text"
-                  placeholder="Temperature range (e.g., 200-230°C)"
+                  type='text'
+                  placeholder='Temperature range (e.g., 200-230°C)'
                   value={newMaterial.temperature}
-                  onChange={(e) => setNewMaterial(prev => ({ ...prev, temperature: e.target.value }))}
+                  onChange={e =>
+                    setNewMaterial(prev => ({
+                      ...prev,
+                      temperature: e.target.value
+                    }))
+                  }
                   className={styles.input}
                 />
               </div>
               <div className={styles.formRow}>
                 <input
-                  type="text"
-                  placeholder="Available colors"
+                  type='text'
+                  placeholder='Available colors'
                   value={newMaterial.colors}
-                  onChange={(e) => setNewMaterial(prev => ({ ...prev, colors: e.target.value }))}
+                  onChange={e =>
+                    setNewMaterial(prev => ({
+                      ...prev,
+                      colors: e.target.value
+                    }))
+                  }
                   className={styles.input}
                 />
               </div>
@@ -206,7 +298,7 @@ const MaterialTypes = ({ selectedMaterial, onMaterialChange, showInfo = false })
           )}
         </div>
       </div>
-    )
+    );
   }
 
   // Simple selector mode
@@ -214,7 +306,7 @@ const MaterialTypes = ({ selectedMaterial, onMaterialChange, showInfo = false })
     <div className={styles.materialSelector}>
       <select
         value={selectedMaterial}
-        onChange={(e) => onMaterialChange(e.target.value)}
+        onChange={e => onMaterialChange(e.target.value)}
         className={styles.select}
       >
         {materials.map(material => (
@@ -229,7 +321,13 @@ const MaterialTypes = ({ selectedMaterial, onMaterialChange, showInfo = false })
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default MaterialTypes
+MaterialTypes.propTypes = {
+  selectedMaterial: PropTypes.string,
+  onMaterialChange: PropTypes.func,
+  showInfo: PropTypes.bool
+};
+
+export default memo(MaterialTypes);

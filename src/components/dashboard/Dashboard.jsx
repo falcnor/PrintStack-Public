@@ -1,12 +1,18 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { useApp } from '../../contexts/AppContext.jsx'
-import { calculateStats, formatCurrency, formatWeight } from '../../utils/dataUtils.js'
-import styles from './Dashboard.module.css'
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+import { useApp } from '../../contexts/AppContext.jsx';
+import {
+  calculateStats,
+  formatCurrency,
+  formatWeight
+} from '../../utils/dataUtils.js';
+
+import styles from './Dashboard.module.css';
 
 const Dashboard = () => {
-  const { filaments, models, prints } = useApp()
-  const stats = calculateStats(filaments, models, prints)
+  const { filaments, models, prints } = useApp();
+  const stats = calculateStats(filaments, models, prints);
 
   const quickActions = [
     {
@@ -37,15 +43,15 @@ const Dashboard = () => {
       icon: '📊',
       color: 'var(--success-color)'
     }
-  ]
+  ];
 
   const recentFilaments = filaments
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 3)
+    .slice(0, 3);
 
   const recentPrints = prints
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 3)
+    .slice(0, 3);
 
   return (
     <div className={styles.dashboard}>
@@ -113,7 +119,7 @@ const Dashboard = () => {
         <div className={styles.contentCard}>
           <div className={styles.contentHeader}>
             <h2>Recent Filaments</h2>
-            <Link to="/filaments" className={styles.viewAll}>
+            <Link to='/filaments' className={styles.viewAll}>
               View All →
             </Link>
           </div>
@@ -124,7 +130,9 @@ const Dashboard = () => {
                   <div className={styles.itemIcon}>🧵</div>
                   <div className={styles.itemInfo}>
                     <h4>{filament.name}</h4>
-                    <p>{filament.material} • {filament.color || 'No color'}</p>
+                    <p>
+                      {filament.material} • {filament.color || 'No color'}
+                    </p>
                   </div>
                   <div className={styles.itemDetails}>
                     {filament.cost && (
@@ -132,7 +140,10 @@ const Dashboard = () => {
                     )}
                     {filament.remainingWeight && filament.weight && (
                       <span className={styles.percentage}>
-                        {Math.round((filament.remainingWeight / filament.weight) * 100)}%
+                        {Math.round(
+                          (filament.remainingWeight / filament.weight) * 100
+                        )}
+                        %
                       </span>
                     )}
                   </div>
@@ -141,7 +152,7 @@ const Dashboard = () => {
             ) : (
               <div className={styles.empty}>
                 <p>No filaments added yet</p>
-                <Link to="/filaments" className={styles.addFirst}>
+                <Link to='/filaments' className={styles.addFirst}>
                   Add your first filament
                 </Link>
               </div>
@@ -153,15 +164,15 @@ const Dashboard = () => {
         <div className={styles.contentCard}>
           <div className={styles.contentHeader}>
             <h2>Recent Prints</h2>
-            <Link to="/prints" className={styles.viewAll}>
+            <Link to='/prints' className={styles.viewAll}>
               View All →
             </Link>
           </div>
           <div className={styles.contentList}>
             {recentPrints.length > 0 ? (
               recentPrints.map(print => {
-                const filament = filaments.find(f => f.id === print.filamentId)
-                const model = models.find(m => m.id === print.modelId)
+                const filament = filaments.find(f => f.id === print.filamentId);
+                const model = models.find(m => m.id === print.modelId);
 
                 return (
                   <div key={print.id} className={styles.listItem}>
@@ -171,17 +182,19 @@ const Dashboard = () => {
                       <p>{filament?.name || 'Unknown Filament'}</p>
                     </div>
                     <div className={styles.itemDetails}>
-                      <span className={`${styles.status} ${styles[print.status]}`}>
+                      <span
+                        className={`${styles.status} ${styles[print.status]}`}
+                      >
                         {print.status}
                       </span>
                     </div>
                   </div>
-                )
+                );
               })
             ) : (
               <div className={styles.empty}>
                 <p>No print jobs recorded yet</p>
-                <Link to="/prints" className={styles.addFirst}>
+                <Link to='/prints' className={styles.addFirst}>
                   Record your first print
                 </Link>
               </div>
@@ -196,11 +209,15 @@ const Dashboard = () => {
         <div className={styles.summaryCards}>
           <div className={styles.summaryCard}>
             <h3>Total Investment</h3>
-            <p className={styles.value}>{formatCurrency(stats.totalFilamentCost)}</p>
+            <p className={styles.value}>
+              {formatCurrency(stats.totalFilamentCost)}
+            </p>
           </div>
           <div className={styles.summaryCard}>
             <h3>Total Material</h3>
-            <p className={styles.value}>{formatWeight(stats.totalFilamentWeight)}</p>
+            <p className={styles.value}>
+              {formatWeight(stats.totalFilamentWeight)}
+            </p>
           </div>
           <div className={styles.summaryCard}>
             <h3>Completed Prints</h3>
@@ -213,7 +230,7 @@ const Dashboard = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;

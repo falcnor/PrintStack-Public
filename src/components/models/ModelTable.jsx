@@ -1,49 +1,59 @@
-import React from 'react'
-import LoadingSpinner from '../common/LoadingSpinner.jsx'
-import styles from './ModelTable.module.css'
+import React from 'react';
+
+import LoadingSpinner from '../common/LoadingSpinner.jsx';
+
+import styles from './ModelTable.module.css';
 
 const ModelTable = ({ models, onEdit, onDelete, loading }) => {
-  const getFilamentName = (filamentId) => {
+  const getFilamentName = filamentId => {
     try {
-      const filaments = JSON.parse(localStorage.getItem('printstack_filaments') || '[]')
-      const filament = filaments.find(f => f.id === filamentId)
-      return filament ? `${filament.colorName || filament.color} (${filament.materialType})` : 'Unknown Filament'
+      const filaments = JSON.parse(
+        localStorage.getItem('printstack_filaments') || '[]'
+      );
+      const filament = filaments.find(f => f.id === filamentId);
+      return filament
+        ? `${filament.colorName || filament.color} (${filament.materialType})`
+        : 'Unknown Filament';
     } catch {
-      return 'Unknown Filament'
+      return 'Unknown Filament';
     }
-  }
+  };
 
-  const getDifficultyColor = (difficulty) => {
+  const getDifficultyColor = difficulty => {
     switch (difficulty) {
-      case 'Easy': return styles.easy
-      case 'Medium': return styles.medium
-      case 'Hard': return styles.hard
-      default: return ''
+      case 'Easy':
+        return styles.easy;
+      case 'Medium':
+        return styles.medium;
+      case 'Hard':
+        return styles.hard;
+      default:
+        return '';
     }
-  }
+  };
 
-  const formatPrintTime = (minutes) => {
-    if (!minutes) return 'Unknown'
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
+  const formatPrintTime = minutes => {
+    if (!minutes) return 'Unknown';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
     if (hours > 0) {
-      return `${hours}h ${mins}m`
+      return `${hours}h ${mins}m`;
     }
-    return `${mins}m`
-  }
+    return `${mins}m`;
+  };
 
-  const handleEdit = (model) => {
-    onEdit(model)
-  }
+  const handleEdit = model => {
+    onEdit(model);
+  };
 
-  const handleDelete = (modelId) => {
-    onDelete(modelId)
-  }
+  const handleDelete = modelId => {
+    onDelete(modelId);
+  };
 
   return (
     <div className={styles.tableContainer}>
       {loading && models.length === 0 ? (
-        <LoadingSpinner message="Loading models..." />
+        <LoadingSpinner message='Loading models...' />
       ) : models.length === 0 ? (
         <div className={styles.emptyState}>
           <p>No models found</p>
@@ -64,15 +74,18 @@ const ModelTable = ({ models, onEdit, onDelete, loading }) => {
               </tr>
             </thead>
             <tbody>
-              {models.map((model) => (
-                <tr key={model.id} className={!model.canPrint ? styles.cannotPrint : ''}>
+              {models.map(model => (
+                <tr
+                  key={model.id}
+                  className={!model.canPrint ? styles.cannotPrint : ''}
+                >
                   <td className={styles.nameCell}>
                     <div className={styles.modelName}>
                       {model.link ? (
                         <a
                           href={model.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          target='_blank'
+                          rel='noopener noreferrer'
                           className={styles.modelLink}
                         >
                           {model.name}
@@ -82,7 +95,9 @@ const ModelTable = ({ models, onEdit, onDelete, loading }) => {
                       )}
                       {model.notes && (
                         <div className={styles.modelNotes} title={model.notes}>
-                          {model.notes.length > 50 ? `${model.notes.substring(0, 50)}...` : model.notes}
+                          {model.notes.length > 50
+                            ? `${model.notes.substring(0, 50)}...`
+                            : model.notes}
                         </div>
                       )}
                     </div>
@@ -91,7 +106,9 @@ const ModelTable = ({ models, onEdit, onDelete, loading }) => {
                     <span className={styles.category}>{model.category}</span>
                   </td>
                   <td>
-                    <span className={`${styles.difficulty} ${getDifficultyColor(model.difficulty)}`}>
+                    <span
+                      className={`${styles.difficulty} ${getDifficultyColor(model.difficulty)}`}
+                    >
                       {model.difficulty}
                     </span>
                   </td>
@@ -99,9 +116,12 @@ const ModelTable = ({ models, onEdit, onDelete, loading }) => {
                     <div className={styles.filamentList}>
                       {model.requirements?.length > 0 ? (
                         model.requirements.map((req, index) => {
-                          const filamentName = getFilamentName(req.filamentId)
+                          const filamentName = getFilamentName(req.filamentId);
                           return (
-                            <div key={req.id || index} className={styles.filamentRequirement}>
+                            <div
+                              key={req.id || index}
+                              className={styles.filamentRequirement}
+                            >
                               <span className={styles.filamentName}>
                                 {req.materialType}
                               </span>
@@ -111,7 +131,7 @@ const ModelTable = ({ models, onEdit, onDelete, loading }) => {
                                 </span>
                               )}
                             </div>
-                          )
+                          );
                         })
                       ) : (
                         <span className={styles.noFilaments}>None</span>
@@ -124,17 +144,24 @@ const ModelTable = ({ models, onEdit, onDelete, loading }) => {
                   <td className={styles.numericColumn}>
                     <div className={styles.printStatus}>
                       {model.canPrint ? (
-                        <span className={`${styles.status} ${styles.printable}`}>
+                        <span
+                          className={`${styles.status} ${styles.printable}`}
+                        >
                           ✓ Yes
                         </span>
                       ) : (
-                        <span className={`${styles.status} ${styles.notPrintable}`}>
+                        <span
+                          className={`${styles.status} ${styles.notPrintable}`}
+                        >
                           ✗ No
                         </span>
                       )}
                     </div>
                     {model.missingFilaments?.length > 0 && (
-                      <div className={styles.missingFilaments} title={`Missing: ${model.missingFilaments.map(f => getFilamentName(f.filamentId)).join(', ')}`}>
+                      <div
+                        className={styles.missingFilaments}
+                        title={`Missing: ${model.missingFilaments.map(f => getFilamentName(f.filamentId)).join(', ')}`}
+                      >
                         <small>Missing filament</small>
                       </div>
                     )}
@@ -175,14 +202,15 @@ const ModelTable = ({ models, onEdit, onDelete, loading }) => {
               <strong>{models.filter(m => m.canPrint).length}</strong> printable
             </span>
             <span>
-              <strong>{models.filter(m => !m.canPrint).length}</strong> need filament
+              <strong>{models.filter(m => !m.canPrint).length}</strong> need
+              filament
             </span>
           </div>
           <div className={styles.categoryBreakdown}>
             {Object.entries(
               models.reduce((acc, model) => {
-                acc[model.category] = (acc[model.category] || 0) + 1
-                return acc
+                acc[model.category] = (acc[model.category] || 0) + 1;
+                return acc;
               }, {})
             ).map(([category, count]) => (
               <span key={category} className={styles.categoryTag}>
@@ -193,7 +221,7 @@ const ModelTable = ({ models, onEdit, onDelete, loading }) => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default ModelTable
+export default ModelTable;

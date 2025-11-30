@@ -392,12 +392,12 @@ td {
     grid-template-columns: 2fr 1fr 1fr;
   }
 
-  .skeletonCell:nth-child(n+4) {
+  .skeletonCell:nth-child(n + 4) {
     display: none;
   }
 
-  th:nth-child(n+4),
-  td:nth-child(n+4) {
+  th:nth-child(n + 4),
+  td:nth-child(n + 4) {
     display: none;
   }
 

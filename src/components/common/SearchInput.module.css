@@ -1,0 +1,72 @@
+.searchInput {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 40px 10px 16px;
+  border: 2px solid #e1e1e1;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: #fff;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.input::placeholder {
+  color: #666;
+}
+
+.clearButton {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.clearButton:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.clearButton:active {
+  background-color: #e0e0e0;
+}
+
+/* Compact variant */
+.searchInput.compact .input {
+  padding: 6px 32px 6px 12px;
+  font-size: 14px;
+}
+
+.searchInput.compact .clearButton {
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  font-size: 16px;
+}

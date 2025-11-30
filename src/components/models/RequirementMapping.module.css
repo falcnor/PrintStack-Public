@@ -118,7 +118,7 @@
 }
 
 .requirementNumber::before {
-  content: '📦';
+  content: "📦";
   font-size: 1rem;
 }
 
@@ -292,7 +292,7 @@
 }
 
 .addButton::before {
-  content: '+';
+  content: "+";
   font-size: 1.2rem;
   font-weight: 700;
 }
@@ -329,7 +329,7 @@
 }
 
 .validationErrors .error::before {
-  content: '⚠️';
+  content: "⚠️";
   font-size: 0.9rem;
 }
 
@@ -352,7 +352,7 @@
 }
 
 .outOfStockWarning::before {
-  content: '⚠️';
+  content: "⚠️";
   font-size: 0.9rem;
 }
 
