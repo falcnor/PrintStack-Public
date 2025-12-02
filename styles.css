@@ -67,6 +67,179 @@ body {
   isolation: isolate;
 }
 
+/* Footer Styles */
+.app-footer {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, var(--logo-dark) 100%);
+  color: #ffffff;
+  margin-top: auto;
+  border-top: 3px solid var(--primary-color);
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 40px;
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-section h4 {
+  color: var(--accent-color);
+  margin-bottom: 15px;
+  font-size: 1.1em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.footer-brand {
+  font-size: 1.8em;
+  font-weight: 700;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.footer-print {
+  color: var(--primary-color);
+}
+
+.footer-stack {
+  color: #ffffff;
+}
+
+.footer-description {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 10px;
+}
+
+.footer-links a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  padding: 5px 0;
+  border-radius: 4px;
+}
+
+.footer-links a:hover {
+  color: var(--accent-color);
+  transform: translateX(5px);
+  background: rgba(255, 255, 255, 0.1);
+  padding-left: 10px;
+}
+
+.github-icon,
+.issue-icon {
+  margin-right: 8px;
+  font-size: 1.1em;
+}
+
+.license-info {
+  text-align: center;
+}
+
+.mit-badge {
+  background: var(--accent-color);
+  color: var(--secondary-color) !important;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9em;
+  display: inline-block;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.license-text {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  text-align: center;
+}
+
+.copyright {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9em;
+  margin-bottom: 8px;
+}
+
+.separator {
+  margin: 0 10px;
+  color: var(--accent-color);
+}
+
+.footer-copyright-details p {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-size: 0.85em;
+}
+
+/* Responsive Footer */
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    text-align: center;
+  }
+
+  .footer-links {
+    max-width: 250px;
+    margin: 0 auto;
+  }
+
+  .license-info {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-content {
+    padding: 30px 15px;
+    gap: 25px;
+  }
+
+  .footer-brand {
+    font-size: 1.5em;
+  }
+
+  .footer-section h4 {
+    font-size: 1em;
+  }
+
+  .footer-bottom {
+    padding: 15px;
+  }
+
+  .copyright {
+    font-size: 0.85em;
+    flex-direction: column;
+  }
+
+  .separator {
+    display: none;
+  }
+}
+
 /* Ensure logo doesn't overflow sidebar */
 @media (max-width: 300px) {
   .sidebar-logo {
@@ -2329,5 +2502,179 @@ mark {
   #_printTable th:nth-child(6) {
     /* Action */
     width: 80px;
+  }
+}
+
+/* Footer Styles */
+.app-footer {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, var(--logo-dark) 100%);
+  color: #ffffff;
+  margin-top: auto;
+  border-top: 3px solid var(--primary-color);
+  margin-top: 50px;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 40px;
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-section h4 {
+  color: var(--accent-color);
+  margin-bottom: 15px;
+  font-size: 1.1em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.footer-brand {
+  font-size: 1.8em;
+  font-weight: 700;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.footer-print {
+  color: var(--primary-color);
+}
+
+.footer-stack {
+  color: #ffffff;
+}
+
+.footer-description {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 10px;
+}
+
+.footer-links a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  padding: 5px 0;
+  border-radius: 4px;
+}
+
+.footer-links a:hover {
+  color: var(--accent-color);
+  transform: translateX(5px);
+  background: rgba(255, 255, 255, 0.1);
+  padding-left: 10px;
+}
+
+.github-icon,
+.issue-icon {
+  margin-right: 8px;
+  font-size: 1.1em;
+}
+
+.license-info {
+  text-align: center;
+}
+
+.mit-badge {
+  background: var(--accent-color);
+  color: var(--secondary-color) !important;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9em;
+  display: inline-block;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.license-text {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  text-align: center;
+}
+
+.copyright {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9em;
+  margin-bottom: 8px;
+}
+
+.separator {
+  margin: 0 10px;
+  color: var(--accent-color);
+}
+
+.footer-copyright-details p {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-size: 0.85em;
+}
+
+/* Responsive Footer */
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    text-align: center;
+  }
+
+  .footer-links {
+    max-width: 250px;
+    margin: 0 auto;
+  }
+
+  .license-info {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-content {
+    padding: 30px 15px;
+    gap: 25px;
+  }
+
+  .footer-brand {
+    font-size: 1.5em;
+  }
+
+  .footer-section h4 {
+    font-size: 1em;
+  }
+
+  .footer-bottom {
+    padding: 15px;
+  }
+
+  .copyright {
+    font-size: 0.85em;
+    flex-direction: column;
+  }
+
+  .separator {
+    display: none;
   }
 }
