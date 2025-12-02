@@ -113,11 +113,6 @@
         "type": 301
       },
       {
-        "source": "/http://*",
-        "destination": "https://printstack.dev",
-        "type": 301
-      },
-      {
         "regex": "/add/(.*)",
         "destination": "/$1/add",
         "type": 301
