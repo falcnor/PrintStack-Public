@@ -1,5 +1,9 @@
 name: Deploy to Production
 
+permissions:
+  contents: write
+  actions: read
+
 on:
   push:
     branches: [main]
@@ -92,11 +96,17 @@ jobs:
         echo "🚨 This deployment requires manual approval in the GitHub UI"
 
     - name: Verify deployment confirmation
-      if: github.event.inputs.confirm_production != 'DEPLOY'
       run: |
-        echo "❌ Deployment confirmation not received"
-        echo "To deploy to production manually, you must type 'DEPLOY' in the confirm_production input"
-        exit 1
+        # Auto-confirm for PR merges, require manual confirmation for manual triggers
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ github.event.inputs.confirm_production }}" != "DEPLOY" ]; then
+            echo "❌ Deployment confirmation not received"
+            echo "To deploy to production manually, you must type 'DEPLOY' in the confirm_production input"
+            exit 1
+          fi
+        else
+          echo "✅ Auto-confirmed deployment: Triggered from push to main branch"
+        fi
 
   deploy:
     name: Deploy to Production Environment
