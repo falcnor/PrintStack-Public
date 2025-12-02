@@ -163,23 +163,30 @@ jobs:
         echo "📦 Preparing vanilla JavaScript production deployment..."
         mkdir -p dist
 
-        # Copy core files
+        # Copy core application files
         cp index.html dist/
         cp script.js dist/
         cp styles.css dist/
-        cp manifest.json dist/
-        cp favicon.ico dist/
-        cp offline.html dist/
-        cp sw.js dist/
+
+        # Copy PWA files from public directory
+        if [ -f "public/favicon.ico" ]; then
+          cp public/favicon.ico dist/
+        fi
+        if [ -f "public/offline.html" ]; then
+          cp public/offline.html dist/
+        fi
+        if [ -f "public/sw.js" ]; then
+          cp public/sw.js dist/
+        fi
 
         # Copy images directory if it exists
         if [ -d "images" ]; then
           cp -r images dist/
         fi
 
-        # Copy api directory if it exists
-        if [ -d "api" ]; then
-          cp -r api dist/
+        # Copy api directory from public if it exists
+        if [ -d "public/api" ]; then
+          cp -r public/api dist/
         fi
 
         echo "✅ Production files prepared for deployment"
