@@ -1,4 +1,4 @@
-# Claude/Speckit folders
+# Claude/Speckit folders (development tooling)
 .claude/
 .speckit/
 speckit/
@@ -17,7 +17,7 @@ specs/
 **/specs/
 
 # Files
-CLAUDE.MD
+CLAUDE.md
 .env
 
 # Development and testing files (keep core app, exclude dev tools)
@@ -25,10 +25,21 @@ CLAUDE.MD
 *_audit.html
 *_compliance.html
 deploy/
+dist/
+build/
 performance_test.html
 cross_browser_test.html
 accessibility_audit.html
 constitution_compliance.html
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.log*
+
+# Google Cloud SDK (development artifacts)
+google-cloud-sdk/
+*google-cloud-sdk*/
 
 # JavaScript/Web development patterns for PrintStack SPA
 .DS_Store
@@ -71,10 +82,9 @@ coverage/
 ehthumbs.db
 Thumbs.db
 
-# Backup files (related to T001)
+# Backup files
 *.bak
 *.backup
-backup/
 
 # Node.js and React patterns
 node_modules/
@@ -91,7 +101,16 @@ build/
 coverage/
 *.lcov
 
-# Misc files
+# Misc files and scripts
 *LATEST_DEPLOYMENT*
 *IMPLEMENTATION_TEST*
 *test_*
+setup-branch-protection.sh
+package.json.backup
+
+# Monitoring artifacts
+monitoring/metrics.json
+monitoring/uptime.log
+
+# Shell scripts (only keep in docs)
+*.sh
