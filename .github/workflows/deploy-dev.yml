@@ -100,8 +100,9 @@ jobs:
         echo "Branch: ${{ github.ref_name }}"
         echo "Commit: ${{ github.sha }}"
 
-        # Clear any Firebase cache and ensure we use correct project
-        firebase use ${{ env.FIREBASE_PROJECT }} --force
+        # Clear any Firebase cache and set correct project
+        firebase logout
+        firebase use ${{ env.FIREBASE_PROJECT }}
 
         # Show current Firebase project for debugging
         echo "🔍 Firebase current project:"
@@ -114,7 +115,7 @@ jobs:
         for attempt in $(seq 1 ${{ env.RETRY_ATTEMPTS }}); do
           echo "📦 Deployment attempt $attempt of ${{ env.RETRY_ATTEMPTS }}"
 
-          if firebase deploy --only hosting --project ${{ env.FIREBASE_PROJECT }} --non-interactive --force; then
+          if firebase deploy --only hosting --project ${{ env.FIREBASE_PROJECT }} --non-interactive; then
             echo "✅ Deployment successful on attempt $attempt"
             echo "deploy_success=true" >> $GITHUB_OUTPUT
             echo "deployment_url=https://printstack-dev.web.app" >> $GITHUB_OUTPUT
