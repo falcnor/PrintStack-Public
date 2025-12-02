@@ -1,0 +1,333 @@
+{
+  "hosting": {
+    "public": "dist",
+    "site": "printstack-prod",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "redirects": [
+      {
+        "regex": "/.well-known.*",
+        "destination": "/.well-known",
+        "type": 404
+      },
+      {
+        "source": "/home",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/index.html",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "regex": "/page/(.*)",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/filament/:id*",
+        "destination": "/filaments/:id",
+        "type": 301
+      },
+      {
+        "source": "/model/:id*",
+        "destination": "/models/:id",
+        "type": 301
+      },
+      {
+        "source": "/print/:id*",
+        "destination": "/prints/:id",
+        "type": 301
+      },
+      {
+        "source": "/statistic/:id*",
+        "destination": "/statistics/:id",
+        "type": 301
+      },
+      {
+        "regex": "/filament(?:s)?/(.+)",
+        "destination": "/filaments/:id",
+        "type": 301
+      },
+      {
+        "regex": "/model(?:s)?/(.+)",
+        "destination": "/models/:id",
+        "type": 301
+      },
+      {
+        "regex": "/print(?:s)?/(.+)",
+        "destination": "/prints/:id",
+        "type": 301
+      },
+      {
+        "regex": "/statistic(?:s)?/(.+)",
+        "destination": "/statistics/:id",
+        "type": 301
+      },
+      {
+        "source": "/inventory",
+        "destination": "/filaments",
+        "type": 301
+      },
+      {
+        "source": "/library",
+        "destination": "/models",
+        "type": 301
+      },
+      {
+        "source": "/history",
+        "destination": "/prints",
+        "type": 301
+      },
+      {
+        "source": "/analytics",
+        "destination": "/statistics",
+        "type": 301
+      },
+      {
+        "source": "/dashboard",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/overview",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/app",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "regex": "/(www\\.)?printstack\\.app",
+        "destination": "https://printstack.dev",
+        "type": 301
+      },
+      {
+        "regex": "/(www\\.)?printstack\\.io",
+        "destination": "https://printstack.dev",
+        "type": 301
+      },
+      {
+        "source": "/http://*",
+        "destination": "https://printstack.dev",
+        "type": 301
+      },
+      {
+        "regex": "/add/(.*)",
+        "destination": "/$1/add",
+        "type": 301
+      },
+      {
+        "regex": "/edit/(.*)",
+        "destination": "/$1/edit",
+        "type": 301
+      },
+      {
+        "regex": "/delete/(.*)",
+        "destination": "/$1/delete",
+        "type": 301
+      },
+      {
+        "source": "/api/v1/:path*",
+        "destination": "/api/:path*",
+        "type": 301
+      },
+      {
+        "source": "/api/v2/:path*",
+        "destination": "/api/:path*",
+        "type": 301
+      },
+      {
+        "source": "/auth/login",
+        "destination": "/login",
+        "type": 301
+      },
+      {
+        "source": "/auth/register",
+        "destination": "/register",
+        "type": 301
+      },
+      {
+        "source": "/auth/logout",
+        "destination": "/logout",
+        "type": 301
+      },
+      {
+        "source": "/user/profile",
+        "destination": "/profile",
+        "type": 301
+      },
+      {
+        "source": "/user/settings",
+        "destination": "/settings",
+        "type": 301
+      },
+      {
+        "regex": "/search\\?q=(.*)",
+        "destination": "/search?q=$1",
+        "type": 301
+      },
+      {
+        "regex": "/category/(.*)",
+        "destination": "/models?category=$1",
+        "type": 301
+      },
+      {
+        "regex": "/tag/(.*)",
+        "destination": "/models?tag=$1",
+        "type": 301
+      },
+      {
+        "source": "/featured",
+        "destination": "/models?featured=true",
+        "type": 301
+      },
+      {
+        "source": "/recent",
+        "destination": "/prints?recent=true",
+        "type": 301
+      },
+      {
+        "source": "/popular",
+        "destination": "/models?popular=true",
+        "type": 301
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          },
+          {
+            "key": "Content-Encoding",
+            "value": "gzip"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(jpg|jpeg|png|gif|webp|avif|svg|ico)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=86400"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(woff|woff2|ttf|eot)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          },
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          }
+        ]
+      },
+      {
+        "source": "index.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          },
+          {
+            "key": "Pragma",
+            "value": "no-cache"
+          },
+          {
+            "key": "Expires",
+            "value": "0"
+          }
+        ]
+      },
+      {
+        "source": "/manifest.json",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "geolocation=(), microphone=(), camera=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=()"
+          },
+          {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=31536000; includeSubDomains; preload"
+          },
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com; worker-src 'self' blob:; child-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(html)",
+        "headers": [
+          {
+            "key": "X-XSS-Protection",
+            "value": "1; mode=block"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(api|json)",
+        "headers": [
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "'self'"
+          },
+          {
+            "key": "Access-Control-Allow-Methods",
+            "value": "GET, POST, PUT, DELETE, OPTIONS"
+          },
+          {
+            "key": "Access-Control-Allow-Headers",
+            "value": "Content-Type, Authorization"
+          }
+        ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "cleanUrls": true,
+    "trailingSlash": false
+  }
+}

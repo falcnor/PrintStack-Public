@@ -367,3 +367,106 @@ a:focus {
     page-break-before: always;
   }
 }
+
+/* Data Saver Mode Styles */
+html.data-saver {
+  /* Disable animations and transitions */
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Optimize font loading */
+  font-display: swap;
+
+  /* Disable lazy loading for smoother experience */
+  img {
+    loading: auto;
+  }
+}
+
+/* Emergency Data Saver Mode */
+html.data-saver-emergency {
+  /* More aggressive optimizations */
+  * {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  /* Disable heavy visual effects */
+  *::before,
+  *::after {
+    display: none !important;
+  }
+
+  /* Simplified layout */
+  body {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  /* Remove decorative elements */
+  .decorative,
+  .background-pattern,
+  .gradient {
+    display: none !important;
+  }
+
+  /* Simplified colors - remove gradients and shadows */
+  * {
+    background: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Essential borders only */
+  button,
+  input,
+  textarea,
+  select,
+  .card {
+    border: 1px solid #ccc !important;
+    background: white !important;
+  }
+}
+
+/* Storage Restricted Mode */
+.storage-restricted {
+  /* Visual indicator for storage restrictions */
+}
+
+/* Request Throttling Mode */
+.request-throttled {
+  /* Visual indicator for throttling */
+}
+
+/* Quota Status Indicator */
+.quota-status-indicator {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.quota-status-indicator.warning {
+  background: #856404;
+}
+
+.quota-status-indicator.critical {
+  background: #721c24;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.5; }
+}

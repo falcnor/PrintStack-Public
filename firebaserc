@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "printstack-dev",
+    "dev": "printstack-dev",
+    "development": "printstack-dev",
+    "prod": "printstack-prod",
+    "production": "printstack-prod"
+  }
+}

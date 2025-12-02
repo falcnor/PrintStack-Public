@@ -1,0 +1,77 @@
+{
+  "endpoints": [
+    {
+      "name": "PrintStack Production Homepage",
+      "url": "https://printstack-prod.web.app",
+      "method": "GET",
+      "frequency": "60",
+      "regions": ["us-east1", "us-west1", "europe-west1"],
+      "alerts": {
+        "response_time_threshold": "3000",
+        "success_rate_threshold": "99.5",
+        "consecutive_failures": "3"
+      }
+    },
+    {
+      "name": "PrintStack Development Homepage",
+      "url": "https://printstack-dev.web.app",
+      "method": "GET",
+      "frequency": "300",
+      "regions": ["us-east1"],
+      "alerts": {
+        "response_time_threshold": "5000",
+        "success_rate_threshold": "95.0",
+        "consecutive_failures": "5"
+      }
+    }
+  ],
+  "alert_channels": [
+    {
+      "name": "development_team",
+      "type": "email",
+      "enabled": true
+    },
+    {
+      "name": "slack_alerts",
+      "type": "webhook",
+      "enabled": false
+    }
+  ],
+  "health_checks": [
+    {
+      "name": "API Connectivity Test",
+      "url": "/api/health",
+      "expected_response": { "status": "ok" },
+      "timeout": "5000"
+    },
+    {
+      "name": "Core Feature Test",
+      "url": "/",
+      "checks": [
+        "Title element contains 'PrintStack'",
+        "Main navigation elements are present",
+        "JavaScript loads without errors"
+      ]
+    }
+  ],
+  "monitoring_schedule": {
+    "business_hours": {
+      "monday-friday": "08:00-18:00",
+      "timezone": "America/New_York"
+    },
+    "after_hours": {
+      "frequency": "300"
+    }
+  },
+  "performance_thresholds": {
+    "response_time": {
+      "p50": "< 500ms",
+      "p95": "< 2000ms",
+      "p99": "< 5000ms"
+    },
+    "availability": {
+      "target": "99.9%",
+      "sla": "99.5%"
+    }
+  }
+}

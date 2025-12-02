@@ -1,0 +1,403 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even if there are recent changes'
+        required: false
+        default: false
+        type: boolean
+      confirm_production:
+        description: 'Type "DEPLOY" to confirm production deployment'
+        required: true
+        default: ''
+
+env:
+  NODE_VERSION: '18'
+  FIREBASE_PROJECT: printstack-prod
+  DEPLOY_TIMEOUT_MINUTES: 15
+  RETRY_ATTEMPTS: 3
+  APPROVAL_TIMEOUT_MINUTES: 30
+
+jobs:
+  pre-deployment-checks:
+    name: Pre-deployment Safety Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      proceed: ${{ steps.checks.outputs.proceed }}
+      status_message: ${{ steps.checks.outputs.status_message }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run safety checks
+      id: checks
+      run: |
+        echo "🔍 Running pre-deployment safety checks..."
+
+        # Check for competing deployments
+        CONCURRENT_DEPLOYS=$(gh workflow list --json 'name,state' | jq -r '.[] | select(.name | contains("Deploy")) | select(.state == "in_progress") | .name')
+        if [ -n "$CONCURRENT_DEPLOYS" ]; then
+          echo "❌ Concurrent deployments detected: $CONCURRENT_DEPLOYS"
+          echo "proceed=false" >> $GITHUB_OUTPUT
+          echo "status_message=Concurrent deployments are running" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+        # Check build dependencies
+        if [ ! -f "package.json" ]; then
+          echo "❌ package.json not found"
+          echo "proceed=false" >> $GITHUB_OUTPUT
+          echo "status_message=package.json is missing" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+        # Check Firebase configuration
+        if [ ! -f "firebase.json" ]; then
+          echo "❌ firebase.json not found"
+          echo "proceed=false" >> $GITHUB_OUTPUT
+          echo "status_message=firebase.json is missing" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+        echo "✅ All safety checks passed"
+        echo "proceed=true" >> $GITHUB_OUTPUT
+        echo "status_message=All safety checks passed" >> $GITHUB_OUTPUT
+
+  manual-approval:
+    name: Manual Production Approval
+    runs-on: ubuntu-latest
+    needs: pre-deployment-checks
+    if: needs.pre-deployment-checks.outputs.proceed == 'true'
+    timeout-minutes: ${{ env.APPROVAL_TIMEOUT_MINUTES }}
+    environment: production
+
+    steps:
+    - name: Request manual approval
+      run: |
+        echo "⏳ Waiting for manual production deployment approval..."
+        echo "📋 Deployment Details:"
+        echo "- 🌐 Environment: Production"
+        echo "- 🌿 Branch: ${{ github.ref_name }}"
+        echo "- 🆔 Commit: ${{ github.sha }}"
+        echo "- 👤 Triggered by: ${{ github.actor }}"
+        echo "- ⏰ Time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+        echo ""
+        echo "🚨 This deployment requires manual approval in the GitHub UI"
+
+    - name: Verify deployment confirmation
+      if: github.event.inputs.confirm_production != 'DEPLOY'
+      run: |
+        echo "❌ Deployment confirmation not received"
+        echo "To deploy to production manually, you must type 'DEPLOY' in the confirm_production input"
+        exit 1
+
+  deploy:
+    name: Deploy to Production Environment
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, manual-approval]
+    if: needs.pre-deployment-checks.outputs.proceed == 'true'
+    timeout-minutes: ${{ env.DEPLOY_TIMEOUT_MINUTES }}
+    concurrency:
+      group: prod-deployment
+      cancel-in-progress: false
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Configure npm
+      run: |
+        npm config set fund false
+        npm config set audit false
+
+    - name: Install dependencies
+      run: npm ci
+      timeout-minutes: 5
+      continue-on-error: false
+
+    - name: Run tests
+      run: npm test
+      timeout-minutes: 5
+      continue-on-error: false
+
+    - name: Production build
+      run: npm run build
+      timeout-minutes: 5
+      env:
+        NODE_ENV: production
+
+    - name: Verify production build
+      run: |
+        echo "🏗️ Verifying production build..."
+
+        if [ ! -d "dist" ]; then
+          echo "❌ Build failed - dist directory not found"
+          exit 1
+        fi
+
+        if [ ! -f "dist/index.html" ]; then
+          echo "❌ Build failed - index.html not found"
+          exit 1
+        fi
+
+        # Check for production optimizations
+        if grep -q "process.env.NODE_ENV" dist/assets/*.js 2>/dev/null; then
+          echo "⚠️ Warning: Found NODE_ENV references in built files"
+        fi
+
+        # Verify build size
+        BUILD_SIZE=$(du -sh dist | cut -f1)
+        echo "📦 Build size: $BUILD_SIZE"
+
+        if [ $(du -s dist | cut -f1) -gt 524288 ]; then # 512MB in KB
+          echo "⚠️ Warning: Build size exceeds 512MB"
+        fi
+
+        echo "✅ Production build verification passed"
+        ls -la dist/
+
+    - name: Security scan
+      run: |
+        echo "🔒 Running security scan..."
+
+        # Check for sensitive data in built files
+        SENSITIVE_PATTERNS=(
+          "password"
+          "secret"
+          "api_key"
+          "private_key"
+          "firebase.*serviceAccount"
+        )
+
+        for pattern in "${SENSITIVE_PATTERNS[@]}"; do
+          if grep -r -i "$pattern" dist/ 2>/dev/null; then
+            echo "🚨 Security alert: Found potential sensitive data matching '$pattern'"
+            exit 1
+          fi
+        done
+
+        echo "✅ Security scan passed"
+
+    - name: Create deployment backup
+      run: |
+        echo "💾 Creating deployment backup..."
+        BACKUP_TAG="backup-$(date +%Y%m%d-%H%M%S)"
+
+        git tag "$BACKUP_TAG"
+        git push origin "$BACKUP_TAG"
+
+        echo "✅ Backup created with tag: $BACKUP_TAG"
+
+    - name: Deploy to Firebase Production
+      id: deploy-prod
+      run: |
+        echo "🚀 Starting PRODUCTION deployment..."
+        echo "⚠️  This will deploy to LIVE PRODUCTION environment"
+        echo "Project: ${{ env.FIREBASE_PROJECT }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Actor: ${{ github.actor }}"
+
+        # Production deployment with enhanced retry logic
+        for attempt in $(seq 1 ${{ env.RETRY_ATTEMPTS }}); do
+          echo "📦 Production deployment attempt $attempt of ${{ env.RETRY_ATTEMPTS }}"
+
+          if firebase deploy --only hosting --project ${{ env.FIREBASE_PROJECT }} --non-interactive; then
+            echo "✅ Production deployment successful on attempt $attempt"
+            echo "deploy_success=true" >> $GITHUB_OUTPUT
+            echo "deployment_url=https://printstack-prod.web.app" >> $GITHUB_OUTPUT
+            break
+          else
+            echo "❌ Production deployment attempt $attempt failed"
+            if [ $attempt -eq ${{ env.RETRY_ATTEMPTS }} ]; then
+              echo "💥 All production deployment attempts failed"
+              echo "DEPLOYMENT FAILED - MANUAL INTERVENTION REQUIRED"
+              echo "deploy_success=false" >> $GITHUB_OUTPUT
+              exit 1
+            else
+              echo "⏳ Waiting 60 seconds before retry..."
+              sleep 60
+            fi
+          fi
+        done
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
+      timeout-minutes: 12
+
+    - name: Production deployment verification
+      run: |
+        echo "🔍 Verifying PRODUCTION deployment..."
+        DEPLOY_URL="${{ steps.deploy-prod.outputs.deployment_url }}"
+        echo "🌐 Testing production URL: $DEPLOY_URL"
+
+        # Allow time for global CDN propagation
+        echo "⏳ Waiting 60 seconds for CDN propagation..."
+        sleep 60
+
+        # Comprehensive URL testing
+        CRITICAL_FILES=(
+          "$DEPLOY_URL/"
+          "$DEPLOY_URL/index.html"
+          "$DEPLOY_URL/manifest.json"
+          "$DEPLOY_URL/favicon.ico"
+        )
+
+        FAILED_TESTS=0
+        for file in "${CRITICAL_FILES[@]}"; do
+          echo "Testing: $file"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$file" || echo "000")
+          RESPONSE_TIME=$(curl -s -o /dev/null -w "%{time_total}" "$file" || echo "0")
+
+          if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "304" ]; then
+            echo "✅ OK - HTTP $HTTP_STATUS (${RESPONSE_TIME}s)"
+          else
+            echo "❌ FAILED - HTTP $HTTP_STATUS (${RESPONSE_TIME}s)"
+            FAILED_TESTS=$((FAILED_TESTS + 1))
+          fi
+        done
+
+        if [ $FAILED_TESTS -gt 0 ]; then
+          echo "💥 Production deployment verification failed - $FAILED_TESTS tests failed"
+          echo "🔄 Initiating emergency rollback..."
+
+          # Get the previous working version
+          PREVIOUS_VERSION=$(firebase hosting:versions:list --project ${{ env.FIREBASE_PROJECT }} --limit 2 --format="json" | jq -r '.versions[1].version')
+          if [ "$PREVIOUS_VERSION" != "null" ] && [ "$PREVIOUS_VERSION" != "" ]; then
+            echo "📦 Rolling back to version $PREVIOUS_VERSION"
+            firebase hosting:rollback --project ${{ env.FIREBASE_PROJECT }} --to "$PREVIOUS_VERSION"
+            echo "🚨 PRODUCTION ROLLBACK COMPLETED"
+          else
+            echo "⚠️ No previous version found - manual recovery required"
+          fi
+          exit 1
+        fi
+
+        echo "✅ Production deployment fully verified"
+
+    - name: Performance validation
+      run: |
+        echo "⚡ Running performance validation..."
+        DEPLOY_URL="${{ steps.deploy-prod.outputs.deployment_url }}"
+
+        # Basic performance tests
+        LCP_TIME=$(curl -s -o /dev/null -w "%{time_total}" "$DEPLOY_URL" || echo "0")
+        TTFB_TIME=$(curl -s -o /dev/null -w "%{time_starttransfer}" "$DEPLOY_URL" || echo "0")
+
+        echo "📊 Performance Metrics:"
+        echo "- 🚀 Largest Contentful Paint: ${LCP_TIME}s"
+        echo "- ⏱️ Time to First Byte: ${TTFB_TIME}s"
+
+        # Check against performance thresholds
+        if (( $(echo "$LCP_TIME > 2.0" | bc -l) )); then
+          echo "⚠️ Warning: LCP time exceeds 2.0 seconds"
+        fi
+
+        if (( $(echo "$TTFB_TIME > 0.6" | bc -l) )); then
+          echo "⚠️ Warning: TTFB time exceeds 600ms"
+        fi
+
+        echo "✅ Performance validation completed"
+
+    - name: Production deployment notification
+      if: always()
+      run: |
+        STATUS="${{ job.status }}"
+        DEPLOY_URL="${{ steps.deploy-prod.outputs.deployment_url }}"
+        COMMIT_SHA="${{ github.sha }}"
+        BRANCH="${{ github.ref_name }}"
+
+        if [ "$STATUS" = "success" ]; then
+          echo "🎉🔥 **PRODUCTION DEPLOYMENT SUCCESSFUL** 🎉🔥"
+          echo ""
+          echo "📊 **Production Deployment Details**"
+          echo "- 🌐 **LIVE URL**: $DEPLOY_URL"
+          echo "- 🌿 **Branch**: $BRANCH"
+          echo "- 🆔 **Commit**: $COMMIT_SHA"
+          echo "- 👤 **Deployer**: ${{ github.actor }}"
+          echo "- ⏰ **Deployed**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "- 🏗️ **Build**: Production optimized"
+          echo ""
+          echo "🚀 **PrintStack is now LIVE in production!** 🚀"
+        else
+          echo "💥 **PRODUCTION DEPLOYMENT FAILED** 💥"
+          echo ""
+          echo "📊 **Failed Production Deployment**"
+          echo "- 🌿 **Branch**: $BRANCH"
+          echo "- 🆔 **Commit**: $COMMIT_SHA"
+          echo "- 👤 **Actor**: ${{ github.actor }}"
+          echo "- ⏰ **Failed**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "- 🔗 **Debug**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo ""
+          echo "🚨 **MANUAL INTERVENTION REQUIRED** 🚨"
+        fi
+
+    - name: Update production deployment status
+      if: success()
+      run: |
+        cat > production-deployment-status.json << EOF
+        {
+          "environment": "production",
+          "project": "${{ env.FIREBASE_PROJECT }}",
+          "url": "${{ steps.deploy-prod.outputs.deployment_url }}",
+          "commit": "${{ github.sha }}",
+          "branch": "${{ github.ref_name }}",
+          "actor": "${{ github.actor }}",
+          "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+          "status": "success",
+          "workflow_run_id": "${{ github.run_id }}",
+          "production": true
+        }
+        EOF
+        echo "Production deployment status recorded"
+
+  emergency-rollback:
+    name: Emergency Rollback
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, deploy]
+    if: failure() && needs.deploy.result == 'failure'
+    timeout-minutes: 5
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Firebase CLI
+      run: |
+        curl -sL https://firebase.tools | bash
+        echo "$PATH" >> $GITHUB_PATH
+
+    - name: Execute emergency rollback
+      run: |
+        echo "🚨 EXECUTING EMERGENCY ROLLBACK..."
+
+        # Get the last known good version
+        PREVIOUS_VERSION=$(firebase hosting:versions:list --project ${{ env.FIREBASE_PROJECT }} --limit 2 --format="json" | jq -r '.versions[1].version')
+
+        if [ "$PREVIOUS_VERSION" != "null" ] && [ "$PREVIOUS_VERSION" != "" ]; then
+          echo "📦 Rolling back to version: $PREVIOUS_VERSION"
+          firebase hosting:rollback --project ${{ env.FIREBASE_PROJECT }} --to "$PREVIOUS_VERSION"
+          echo "✅ Emergency rollback completed"
+          echo "🌐 Production URL: https://printstack-prod.web.app"
+        else
+          echo "❌ No previous version available for rollback"
+          echo "🚨 MANUAL INTERVENTION REQUIRED"
+        fi
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}

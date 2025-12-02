@@ -59,6 +59,52 @@
   font-size: 0.85rem;
   line-height: 1.4;
   margin-top: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.errorId {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin: 10px 0;
+  word-break: break-all;
+}
+
+.errorId code {
+  background-color: e9ecef;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.devInfo {
+  margin-top: 15px;
+}
+
+.section {
+  margin-bottom: 15px;
+}
+
+.section strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #495057;
+}
+
+.copyBtn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #6c757d;
+  color: white;
+}
+
+.copyBtn:hover {
+  background-color: #5a6268;
 }
 
 .actions {

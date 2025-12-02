@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrintStack - Offline</title>
+</head>
+<body>
+  <script>
+    // This is a minimal offline fallback that will be enhanced by the service worker
+    // The actual content will be generated dynamically by the service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        console.log('Service worker is ready, you should be redirected to the enhanced offline page');
+      });
+    }
+  </script>
+</body>
+</html>

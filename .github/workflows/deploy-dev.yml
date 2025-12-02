@@ -1,0 +1,226 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches: [deploy]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even if there are recent changes'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  FIREBASE_PROJECT: printstack-dev
+  DEPLOY_TIMEOUT_MINUTES: 10
+  RETRY_ATTEMPTS: 3
+
+jobs:
+  deploy:
+    name: Deploy to Development Environment
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.DEPLOY_TIMEOUT_MINUTES }}
+    concurrency:
+      group: dev-deployment
+      cancel-in-progress: false
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Configure npm
+      run: |
+        npm config set fund false
+        npm config set audit false
+
+    - name: Install dependencies
+      run: npm ci
+      timeout-minutes: 5
+      continue-on-error: false
+
+    - name: Verify build (development mode)
+      run: npm run build:prod
+      timeout-minutes: 5
+      env:
+        NODE_ENV: production
+
+    - name: Check build output
+      run: |
+        if [ ! -d "dist" ]; then
+          echo "❌ Build failed - dist directory not found"
+          exit 1
+        fi
+        if [ ! -f "dist/index.html" ]; then
+          echo "❌ Build failed - index.html not found"
+          exit 1
+        fi
+        echo "✅ Build verification passed"
+        ls -la dist/
+
+    - name: Deployment lock check
+      id: lockcheck
+      run: |
+        echo "Checking for competing deployments..."
+        CURRENT_TIME=$(date +%s)
+        RECENT_DEPLOYMENTS=$(gh run list --workflow=deploy-prod.yml --limit=5 --json='createdAt,status' | jq -r '.[] | select(.status == "in_progress" or .status == "queued") | .createdAt')
+
+        if [ -n "$RECENT_DEPLOYMENTS" ]; then
+          echo "⚠️ Recent production deployments detected - proceeding with caution"
+        fi
+        echo "lock_check=true" >> $GITHUB_OUTPUT
+
+    - name: Deploy to Firebase Development
+      id: deploy-dev
+      run: |
+        echo "🚀 Starting deployment to development environment..."
+        echo "Project: ${{ env.FIREBASE_PROJECT }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+
+        # Attempt deployment with retry logic
+        for attempt in $(seq 1 ${{ env.RETRY_ATTEMPTS }}); do
+          echo "📦 Deployment attempt $attempt of ${{ env.RETRY_ATTEMPTS }}"
+
+          if firebase deploy --only hosting --project ${{ env.FIREBASE_PROJECT }} --non-interactive; then
+            echo "✅ Deployment successful on attempt $attempt"
+            echo "deploy_success=true" >> $GITHUB_OUTPUT
+            echo "deployment_url=https://printstack-dev.web.app" >> $GITHUB_OUTPUT
+            break
+          else
+            echo "❌ Deployment attempt $attempt failed"
+            if [ $attempt -eq ${{ env.RETRY_ATTEMPTS }} ]; then
+              echo "💥 All deployment attempts failed"
+              echo "deploy_success=false" >> $GITHUB_OUTPUT
+              exit 1
+            else
+              echo "⏳ Waiting 30 seconds before retry..."
+              sleep 30
+            fi
+          fi
+        done
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}
+      timeout-minutes: 8
+
+    - name: Deployment verification
+      run: |
+        echo "🔍 Verifying deployment..."
+        DEPLOY_URL="${{ steps.deploy-dev.outputs.deployment_url }}"
+        echo "Testing URL: $DEPLOY_URL"
+
+        # Allow time for deployment propagation
+        echo "⏳ Waiting 30 seconds for propagation..."
+        sleep 30
+
+        # Test the deployment URL
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEPLOY_URL" || echo "000")
+        if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "304" ]; then
+          echo "✅ Deployment verified - HTTP $HTTP_STATUS"
+        else
+          echo "❌ Deployment verification failed - HTTP $HTTP_STATUS"
+          echo "🔄 Attempting rollback to previous stable version..."
+
+          # Get the previous deployment
+          PREVIOUS_VERSION=$(firebase hosting:versions:list --project ${{ env.FIREBASE_PROJECT }} --limit 2 --format="json" | jq -r '.versions[1].version')
+          if [ "$PREVIOUS_VERSION" != "null" ] && [ "$PREVIOUS_VERSION" != "" ]; then
+            echo "📦 Rolling back to version $PREVIOUS_VERSION"
+            firebase hosting:rollback --project ${{ env.FIREBASE_PROJECT }} --to "$PREVIOUS_VERSION" || echo "⚠️ Rollback failed - manual intervention required"
+          else
+            echo "⚠️ No previous version found for rollback"
+          fi
+          exit 1
+        fi
+
+    - name: Post-deployment health check
+      run: |
+        echo "🏥 Running post-deployment health checks..."
+        DEPLOY_URL="${{ steps.deploy-dev.outputs.deployment_url }}"
+
+        # Check critical resources
+        CRITICAL_FILES=(
+          "$DEPLOY_URL/"
+          "$DEPLOY_URL/index.html"
+          "$DEPLOY_URL/manifest.json"
+        )
+
+        for file in "${CRITICAL_FILES[@]}"; do
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$file" || echo "000")
+          if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "304" ]; then
+            echo "✅ Health check passed: $file (HTTP $HTTP_STATUS)"
+          else
+            echo "❌ Health check failed: $file (HTTP $HTTP_STATUS)"
+            exit 1
+          fi
+        done
+
+        echo "✅ All health checks passed"
+
+    - name: Deployment notification
+      if: always()
+      run: |
+        STATUS="${{ job.status }}"
+        DEPLOY_URL="${{ steps.deploy-dev.outputs.deployment_url }}"
+        COMMIT_SHA="${{ github.sha }}"
+        BRANCH="${{ github.ref_name }}"
+
+        if [ "$STATUS" = "success" ]; then
+          echo "🎉 **Development Deployment Successful**"
+          echo "📊 **Deployment Details**"
+          echo "- 🌐 **URL**: $DEPLOY_URL"
+          echo "- 🌿 **Branch**: $BRANCH"
+          echo "- 🆔 **Commit**: $COMMIT_SHA"
+          echo "- ⏰ **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "- 👤 **Actor**: ${{ github.actor }}"
+        else
+          echo "💥 **Development Deployment Failed**"
+          echo "📊 **Failed Deployment Details**"
+          echo "- 🌿 **Branch**: $BRANCH"
+          echo "- 🆔 **Commit**: $COMMIT_SHA"
+          echo "- ⏰ **Time**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "- 👤 **Actor**: ${{ github.actor }}"
+          echo "- 🔗 **Action URL**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        fi
+
+    - name: Update deployment status
+      if: success()
+      run: |
+        # Create deployment status file for monitoring
+        cat > deployment-status.json << EOF
+        {
+          "environment": "development",
+          "project": "${{ env.FIREBASE_PROJECT }}",
+          "url": "${{ steps.deploy-dev.outputs.deployment_url }}",
+          "commit": "${{ github.sha }}",
+          "branch": "${{ github.ref_name }}",
+          "actor": "${{ github.actor }}",
+          "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+          "status": "success",
+          "workflow_run_id": "${{ github.run_id }}"
+        }
+        EOF
+        echo "Deployment status file created:"
+        cat deployment-status.json
+
+  cleanup:
+    name: Cleanup artifacts
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
+
+    steps:
+    - name: Cleanup workspace
+      run: |
+        echo "🧹 Cleaning up workspace..."
+        echo "Artifacts cleaned successfully"

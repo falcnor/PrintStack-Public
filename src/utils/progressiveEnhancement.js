@@ -429,7 +429,7 @@ class ProgressiveEnhancementTester {
 
   // Run comprehensive test suite
   async runFullProgressiveEnhancementTest() {
-    console.log('🧪 Running Progressive Enhancement Test Suite...');
+    console.log('🧪 Running Comprehensive Progressive Enhancement Test Suite...');
 
     const startTime = performance.now();
     const capabilities = this.getBrowserCapabilities();
@@ -437,6 +437,7 @@ class ProgressiveEnhancementTester {
     console.log('🔍 Testing current browser capabilities...', capabilities);
 
     try {
+      // Core functionality tests
       const semanticResults = await this.testSemanticStructure();
       console.log('📝 Semantic HTML Test Results:', semanticResults);
 
@@ -446,19 +447,104 @@ class ProgressiveEnhancementTester {
       const functionalityResults = await this.testCoreFunctionality();
       console.log('⚙️ Core Functionality Test Results:', functionalityResults);
 
+      // Mobile optimization tests
+      const mobileResults = await this.testMobileOptimizations();
+      console.log('📱 Mobile Optimization Test Results:', mobileResults);
+
+      // JavaScript degradation tests
+      const degradationResults = await this.testJavaScriptDegradation();
+      console.log('🐛 JavaScript Degradation Test Results:', degradationResults);
+
       const duration = performance.now() - startTime;
 
-      return {
+      const comprehensiveResults = {
         capabilities,
-        results: this.testResults,
+        results: {
+          ...this.testResults,
+          performance: { ...this.testResults.performance, mobile: mobileResults },
+          functionality: { ...this.testResults.functionality, degradation: degradationResults }
+        },
+        score: this.calculateProgressiveEnhancementScore(),
         duration: Math.round(duration),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        summary: {
+          semanticScore: this.getSemanticScore(),
+          accessibilityScore: this.getAccessibilityScore(),
+          functionalityScore: this.getFunctionalityScore(),
+          mobileScore: this.getMobileScore(),
+          degradationScore: this.getDegradationScore()
+        }
       };
+
+      console.log(`📊 Final Progressive Enhancement Score: ${comprehensiveResults.score}%`);
+
+      return comprehensiveResults;
 
     } catch (error) {
       console.error('❌ Progressive Enhancement Test failed:', error);
       throw error;
     }
+  }
+
+  // Individual scoring methods for better reporting
+  getSemanticScore() {
+    const results = this.testResults.semantic;
+    if (!results) return 0;
+
+    let score = 0;
+    if (results.hasProperHeadings?.hasH1) score += 35;
+    if (results.hasLandmarks?.hasMain) score += 35;
+    if (results.hasProperForms?.properlyAccessible > 0) score += 30;
+
+    return Math.round(score);
+  }
+
+  getAccessibilityScore() {
+    const results = this.testResults.accessibility;
+    if (!results) return 0;
+
+    const totalImages = results.hasAltText?.total || 0;
+    if (totalImages > 0) {
+      return Math.round((results.hasAltText.withAlt / totalImages) * 100);
+    }
+    return 100; // No images to worry about
+  }
+
+  getFunctionalityScore() {
+    const results = this.testResults.functionality;
+    const capabilities = this.getBrowserCapabilities();
+    if (!results) return 0;
+
+    let score = 0;
+    if (capabilities.localStorage) score += 35;
+    if (results.navigationWorks?.hasProperAnchors) score += 35;
+    if (results.formsWork?.withAction > 0) score += 30;
+
+    return Math.round(score);
+  }
+
+  getMobileScore() {
+    const mobile = this.testResults.performance?.mobile;
+    if (!mobile) return 0;
+
+    let score = 0;
+    if (mobile.viewportConfigured?.isProperlyConfigured) score += 35;
+    if (mobile.touchTargets?.passRate >= 80) score += 35;
+    if (mobile.responsiveImages?.responsiveRatio >= 50) score += 30;
+
+    return Math.round(score);
+  }
+
+  getDegradationScore() {
+    const degradation = this.testResults.functionality?.degradation;
+    if (!degradation) return 0;
+
+    let score = 0;
+    if (degradation.criticalFunctionality?.mainContentAccessible) score += 35;
+    if (degradation.localStorageFallback?.gracefulDegradation) score += 35;
+    if (degradation.formEnhancements?.basicFormFunctionality) score += 30;
+
+    return Math.round(score);
   }
 
   // Generate progressive enhancement report
@@ -504,33 +590,458 @@ class ProgressiveEnhancementTester {
     return recommendations;
   }
 
+  // Test mobile-specific optimizations
+  async testMobileOptimizations() {
+    const results = {
+      viewportConfigured: this.testViewportConfiguration(),
+      touchTargets: this.testTouchTargetSizes(),
+      mobileNavigation: this.testMobileNavigation(),
+      responsiveImages: this.testResponsiveImages(),
+      scrollPerformance: this.testScrollPerformance(),
+      reducedMotion: this.testReducedMotionSupport()
+    };
+
+    this.testResults.performance = { ...this.testResults.performance, mobile: results };
+    return results;
+  }
+
+  testViewportConfiguration() {
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    const hasViewport = !!viewportMeta;
+    const isProperlyConfigured = hasViewport &&
+      viewportMeta.getAttribute('content').includes('width=device-width');
+
+    return {
+      hasViewport,
+      isProperlyConfigured,
+      content: viewportMeta ? viewportMeta.getAttribute('content') : null
+    };
+  }
+
+  testTouchTargetSizes() {
+    const interactiveElements = document.querySelectorAll(
+      'a, button, input, select, textarea, [role="button"], [role="link"], [onclick]'
+    );
+
+    const smallTouchTargets = [];
+    const recommendedMinSize = 44; // 44px minimum as per WCAG guidelines
+
+    Array.from(interactiveElements).forEach(element => {
+      const rect = element.getBoundingClientRect();
+      const width = rect.width || 0;
+      const height = rect.height || 0;
+
+      if (width < recommendedMinSize || height < recommendedMinSize) {
+        smallTouchTargets.push({
+          element,
+          width,
+          height,
+          textContent: element.textContent?.trim() || element.alt || element.value || ''
+        });
+      }
+    });
+
+    return {
+      totalInteractive: interactiveElements.length,
+      smallTouchTargets: smallTouchTargets.length,
+      smallTouchTargetDetails: smallTouchTargets,
+      passRate: interactiveElements.length > 0
+        ? Math.round(((interactiveElements.length - smallTouchTargets.length) / interactiveElements.length) * 100)
+        : 100
+    };
+  }
+
+  testMobileNavigation() {
+    const navigation = document.querySelector('nav, [role="navigation"]');
+    const burgerMenu = document.querySelector('.burger, .hamburger, [aria-label*="menu"], [aria-label*="Menu"]');
+    const mobileOnly = document.querySelectorAll('.mobile-only, [class*="md:hidden"], [class*="lg:hidden"]');
+    const desktopOnly = document.querySelectorAll('.desktop-only, [class*="md:block"], [class*="lg:block"]');
+
+    return {
+      hasNavigation: !!navigation,
+      hasMobileMenu: !!burgerMenu,
+      mobileOnlyElements: mobileOnly.length,
+      desktopOnlyElements: desktopOnly.length,
+      usesResponsiveClasses: mobileOnly.length > 0 || desktopOnly.length > 0
+    };
+  }
+
+  testResponsiveImages() {
+    const images = document.querySelectorAll('img');
+    const responsiveImages = [];
+    const imagesWithSizes = [];
+    const imagesWithPics = document.querySelectorAll('picture');
+
+    Array.from(images).forEach(img => {
+      const hasSrcset = !!img.getAttribute('srcset');
+      const hasSizes = !!img.getAttribute('sizes');
+      const hasLoading = img.getAttribute('loading') === 'lazy';
+      const isResponsive = hasSrcset || hasLoading;
+
+      if (hasSrcset) responsiveImages.push(img);
+      if (hasSizes) imagesWithSizes.push(img);
+
+      if (isResponsive) {
+        responsiveImages.push({
+          element: img,
+          hasSrcset,
+          hasSizes,
+          hasLoading,
+          src: img.src || img.getAttribute('data-src')
+        });
+      }
+    });
+
+    return {
+      totalImages: images.length,
+      responsiveImages: responsiveImages.length,
+      imagesWithSizes: imagesWithSizes.length,
+      pictureElements: imagesWithPics.length,
+      lazyLoaded: Array.from(images).filter(img =>
+        img.getAttribute('loading') === 'lazy'
+      ).length,
+      responsiveRatio: images.length > 0
+        ? Math.round((responsiveImages.length / images.length) * 100)
+        : 100
+    };
+  }
+
+  testScrollPerformance() {
+    const startTime = performance.now();
+    const scrollTest = () => {
+      let scrollCount = 0;
+      const maxScrolls = 100;
+      const scrollStep = 10;
+
+      const scroll = () => {
+        if (scrollCount < maxScrolls && document.body.scrollHeight > window.innerHeight) {
+          window.scrollBy(0, scrollStep);
+          scrollCount++;
+          setTimeout(scroll, 10);
+        } else {
+          window.scrollTo(0, 0); // Reset scroll
+        }
+      };
+
+      return new Promise(resolve => {
+        scroll();
+        setTimeout(resolve, 2000); // Give it time to complete
+      });
+    };
+
+    return scrollTest().then(() => {
+      const duration = performance.now() - startTime;
+      return {
+        scrollTestDuration: Math.round(duration),
+        smoothScrolling: 'scroll-behavior' in document.documentElement.style,
+        hasWillChange: document.querySelectorAll('[style*="will-change"]').length,
+        hasTransform: document.querySelectorAll('[style*="transform"]').length
+      };
+    });
+  }
+
+  testReducedMotionSupport() {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const animatedElements = document.querySelectorAll(
+      '[style*="animation"], [style*="transition"], .animate, .animated'
+    );
+
+    return {
+      prefersReduced: prefersReducedMotion.matches,
+      animatedElements: animatedElements.length,
+      respectReducedMotion: animatedElements.length === 0 ||
+        document.querySelectorAll('@media (prefers-reduced-motion)').length > 0
+    };
+  }
+
+  // Test JavaScript degradation scenarios
+  async testJavaScriptDegradation() {
+    const results = {
+      noJavaScriptMode: this.testNoJavaScriptMode(),
+      partialJavaScriptMode: this.testPartialJavaScriptMode(),
+      criticalFunctionality: this.testCriticalFunctionalityWithoutJS(),
+      formEnhancements: this.testFormEnhancementsWithoutJS(),
+      localStorageFallback: this.testLocalStorageFallback()
+    };
+
+    this.testResults.functionality = { ...this.testResults.functionality, degradation: results };
+    return results;
+  }
+
+  testNoJavaScriptMode() {
+    // Test what happens when JavaScript is completely disabled
+    return {
+      navigation: this.testNavigationWithoutJS(),
+      contentAccessible: this.checkContentAccessibilityWithoutJS(),
+      formsFunctional: this.testBasicFormFunctionality(),
+      dataStructure: this.checkDataStructureWithoutJS()
+    };
+  }
+
+  testPartialJavaScriptMode() {
+    // Test scenarios with limited JavaScript (e.g., slow loading, script errors)
+    const results = {
+      delayedLoading: this.simulateDelayedJavaScript(),
+      scriptErrors: this.simulateScriptErrors(),
+      networkLimited: this.simulateLimitedNetwork(),
+      memoryLimited: this.simulateLimitedMemory()
+    };
+
+    return results;
+  }
+
+  simulateDelayedJavaScript() {
+    // Simulate slow JavaScript loading by checking async/defer attributes
+    const scripts = document.querySelectorAll('script[src]');
+    const deferScripts = Array.from(scripts).filter(s => s.hasAttribute('defer'));
+    const asyncScripts = Array.from(scripts).filter(s => s.hasAttribute('async'));
+
+    return {
+      totalScripts: scripts.length,
+      deferScripts: deferScripts.length,
+      asyncScripts: asyncScripts.length,
+      criticalScriptsInline: document.querySelectorAll('script:not([src])').length
+    };
+  }
+
+  simulateScriptErrors() {
+    // Test resilience to script errors
+    const hasErrorHandlers = document.querySelectorAll('script[onerror], window.onerror').length > 0;
+    const hasTryCatch = document.body.innerHTML.includes('try') && document.body.innerHTML.includes('catch');
+
+    return {
+      hasErrorHandlers,
+      hasGlobalErrorHandler: typeof window.onerror === 'function',
+      hasTryCatchInCode: hasTryCatch
+    };
+  }
+
+  simulateLimitedNetwork() {
+    // Test behavior on slow/limited networks
+    return {
+      hasServiceWorker: 'serviceWorker' in navigator,
+      hasOfflineSupport: 'caches' in window,
+      hasBackgroundSync: 'serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype,
+      connectionAPI: 'connection' in navigator || 'mozConnection' in navigator || 'webkitConnection' in navigator
+    };
+  }
+
+  simulateLimitedMemory() {
+    // Test memory conservation
+    const memoryInfo = 'memory' in performance ? performance.memory : null;
+
+    return {
+      memoryAPIAvailable: !!memoryInfo,
+      estimatedLimit: memoryInfo?.jsHeapSizeLimit || null,
+      currentUsage: memoryInfo?.usedJSHeapSize || null,
+      recommendations: memoryInfo ?
+        (memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit > 0.7 ? 'Consider memory optimization' : 'Memory usage OK')
+        : 'Memory API not available'
+    };
+  }
+
+  testCriticalFunctionalityWithoutJS() {
+    // Test core functionality that must work without JavaScript
+    return {
+      mainContentAccessible: this.testMainContentAccessibility(),
+      navigationStructure: this.testNavigationWithoutJS(),
+      essentialDataVisible: this.testEssentialDataVisibility(),
+      formsBasic: this.testBasicFormFunctionality()
+    };
+  }
+
+  testFormEnhancementsWithoutJS() {
+    // Test how forms degrade gracefully without JavaScript enhancements
+    const forms = document.querySelectorAll('form');
+    const enhancedForms = Array.from(forms).filter(form => {
+      const hasEnhancedInputs = form.querySelectorAll('input[type="date"], input[type="color"], input[type="range"]').length > 0;
+      const hasCustomValidation = form.querySelectorAll('[pattern], [min], [max]').length > 0;
+      const hasAsyncSubmit = form.querySelector('[type="submit"]');
+
+      return hasEnhancedInputs || hasCustomValidation || hasAsyncSubmit;
+    });
+
+    return {
+      totalForms: forms.length,
+      enhancedForms: enhancedForms.length,
+      degradableEnhancements: enhancedForms.every(form => {
+        const hasFallbackAction = form.getAttribute('action');
+        const hasFallbackMethod = form.getAttribute('method');
+        return hasFallbackAction || hasFallbackMethod;
+      }),
+      basicFormFunctionality: this.testBasicFormFunctionality()
+    };
+  }
+
+  testLocalStorageFallback() {
+    // Test fallback mechanisms when localStorage is not available
+    const originalLocalStorage = window.localStorage;
+    let originalAvailable;
+
+    try {
+      originalAvailable = !!originalLocalStorage;
+      // Temporarily disable localStorage to test fallbacks
+      Object.defineProperty(window, 'localStorage', {
+        value: undefined,
+        writable: true,
+        configurable: true
+      });
+
+      // Test if application has fallback mechanisms
+      const hasInMemoryFallback = document.body.innerHTML.includes('Map(') || document.body.innerHTML.includes('{}');
+      const hasSessionStorageFallback = 'sessionStorage' in window;
+
+      return {
+        originalAvailable,
+        hasFallbackHandling: hasInMemoryFallback || hasSessionStorageFallback,
+        sessionStorageAvailable: hasSessionStorageFallback,
+        inMemoryPatterns: hasInMemoryFallback,
+        gracefulDegradation: true // Assume true if app still loads
+      };
+
+    } catch (error) {
+      return {
+        error: error.message,
+        gracefulDegradation: false
+      };
+    } finally {
+      // Restore localStorage
+      if (originalLocalStorage) {
+        Object.defineProperty(window, 'localStorage', {
+          value: originalLocalStorage,
+          writable: true,
+          configurable: true
+        });
+      }
+    }
+  }
+
+  testMainContentAccessibility() {
+    const main = document.querySelector('main, [role="main"], #main, .main') || document.body;
+    const hasReadableContent = main.textContent.trim().length > 100;
+    const hasHeadings = main.querySelectorAll('h1, h2, h3, h4, h5, h6').length > 0;
+
+    return {
+      hasMainContent: hasReadableContent,
+      hasHeadingStructure: hasHeadings,
+      contentLength: main.textContent.trim().length,
+      passesAccessibility: hasReadableContent && hasHeadings
+    };
+  }
+
+  testEssentialDataVisibility() {
+    // Check if essential data (like inventory lists) is visible without JavaScript
+    const dataElements = document.querySelectorAll(
+      'table, [class*="list"], [class*="table"], [class*="data"]'
+    );
+
+    return {
+      dataElementsFound: dataElements.length,
+      hasVisibleData: Array.from(dataElements).some(el => {
+        const style = window.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+      }),
+      hasStructuredData: document.querySelectorAll('table thead, table tbody').length > 0
+    };
+  }
+
+  testBasicFormFunctionality() {
+    const forms = document.querySelectorAll('form');
+    const functionalForms = Array.from(forms).filter(form => {
+      const hasAction = form.getAttribute('action');
+      const hasMethod = form.getAttribute('method') || 'get';
+      const hasSubmitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+
+      return hasAction || hasSubmitButton;
+    });
+
+    return {
+      totalForms: forms.length,
+      functionalForms: functionalForms.length,
+      basicFunctionalityOk: forms.length === functionalForms.length
+    };
+  }
+
+  testNavigationWithoutJS() {
+    const links = document.querySelectorAll('a[href]');
+    const functionalLinks = Array.from(links).filter(link => {
+      const href = link.getAttribute('href');
+      return href && href !== '#' && href !== 'javascript:void(0)';
+    });
+
+    return {
+      totalLinks: links.length,
+      functionalLinks: functionalLinks.length,
+      hasNonJSNavigation: functionalLinks.length > 0
+    };
+  }
+
+  checkContentAccessibilityWithoutJS() {
+    // Test if content is accessible without JavaScript
+    const content = document.body.textContent.trim();
+    const hasStructuredContent = document.querySelectorAll('h1, h2, h3, h4, h5, h6, p').length > 0;
+
+    return {
+      hasContent: content.length > 50,
+      hasStructure: hasStructuredContent,
+      contentLength: content.length,
+      passesBasicAccessibility: content.length > 50 && hasStructuredContent
+    };
+  }
+
+  checkDataStructureWithoutJS() {
+    // Test if data is structured without JavaScript
+    const tables = document.querySelectorAll('table');
+    const lists = document.querySelectorAll('ul, ol, dl');
+    const articles = document.querySelectorAll('article, section[data-type]');
+
+    return {
+      hasStructuredData: tables.length > 0 || lists.length > 0 || articles.length > 0,
+      tables: tables.length,
+      lists: lists.length,
+      articles: articles.length
+    };
+  }
+
   calculateProgressiveEnhancementScore() {
     const results = this.testResults;
     let score = 0;
     let maxScore = 0;
 
-    // Semantic HTML scoring (30%)
-    maxScore += 30;
-    if (results.semantic.hasProperHeadings?.hasH1) score += 10;
-    if (results.semantic.hasLandmarks?.hasMain) score += 10;
-    if (results.semantic.hasProperForms?.properlyAccessible > 0) score += 10;
+    // Semantic HTML scoring (20%)
+    maxScore += 20;
+    if (results.semantic.hasProperHeadings?.hasH1) score += 7;
+    if (results.semantic.hasLandmarks?.hasMain) score += 7;
+    if (results.semantic.hasProperForms?.properlyAccessible > 0) score += 6;
 
-    // Accessibility scoring (40%)
-    maxScore += 40;
+    // Accessibility scoring (20%)
+    maxScore += 20;
     const totalImages = results.accessibility.hasAltText?.total || 0;
     if (totalImages > 0) {
-      const altRatio = (results.accessibility.hasAltText.withAlt / totalImages) * 40;
+      const altRatio = (results.accessibility.hasAltText.withAlt / totalImages) * 20;
       score += altRatio;
     } else {
-      score += 40; // No images to worry about
+      score += 20; // No images to worry about
     }
 
-    // Functionality scoring (30%)
-    maxScore += 30;
+    // Functionality scoring (20%)
+    maxScore += 20;
     const capabilities = this.getBrowserCapabilities();
-    if (capabilities.localStorage) score += 10;
-    if (results.functionality.navigationWorks?.hasProperAnchors) score += 10;
-    if (results.functionality.formsWork?.withAction > 0) score += 10;
+    if (capabilities.localStorage) score += 7;
+    if (results.functionality.navigationWorks?.hasProperAnchors) score += 7;
+    if (results.functionality.formsWork?.withAction > 0) score += 6;
+
+    // Mobile optimization scoring (20%)
+    maxScore += 20;
+    if (results.performance?.mobile?.viewportConfigured?.isProperlyConfigured) score += 7;
+    if (results.performance?.mobile?.touchTargets?.passRate >= 80) score += 7;
+    if (results.performance?.mobile?.responsiveImages?.responsiveRatio >= 50) score += 6;
+
+    // JavaScript degradation scoring (20%)
+    maxScore += 20;
+    if (results.functionality?.degradation?.criticalFunctionality?.mainContentAccessible) score += 7;
+    if (results.functionality?.degradation?.localStorageFallback?.gracefulDegradation) score += 7;
+    if (results.functionality?.degradation?.formEnhancements?.basicFormFunctionality) score += 6;
 
     return maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
   }

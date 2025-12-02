@@ -1,0 +1,123 @@
+{
+  "domain": "{{CUSTOM_DOMAIN}}",
+  "environment": "{{ENVIRONMENT}}",
+  "project": "{{FIREBASE_PROJECT}}",
+  "configuration": {
+    "verification": {
+      "type": "TXT",
+      "name": "{{VERIFICATION_RECORD_NAME}}",
+      "value": "{{VERIFICATION_CODE}}",
+      "description": "Domain ownership verification - get code from Firebase console"
+    },
+    "hosting": {
+      "type": "A",
+      "name": "{{HOSTING_RECORD_NAME}}",
+      "values": [
+        "192.168.0.1",
+        "192.168.0.2"
+      ],
+      "description": "Firebase hosting IP addresses - get current values from Firebase console"
+    },
+    "www": {
+      "type": "{{WWW_RECORD_TYPE}}",
+      "name": "www",
+      "value": "{{WWW_RECORD_VALUE}}",
+      "description": "WWW redirect - use CNAME to root domain or A records for hosting"
+    }
+  },
+  "instructions": {
+    "firebase": {
+      "step1": "Go to Firebase Console → Hosting → Custom domains",
+      "step2": "Click 'Add domain' and enter your custom domain",
+      "step3": "Copy the verification code provided by Firebase",
+      "step4": "Add the verification TXT record to your DNS provider",
+      "step5": "Wait for verification (usually immediate)",
+      "step6": "Add the A records provided by Firebase"
+    },
+    "dnsProvider": {
+      "godaddy": {
+        "login": "Sign in to GoDaddy",
+        "navigate": "Domain Management → DNS Management",
+        "addRecords": "Add the records provided by Firebase",
+        "ttl": "Set TTL to 1 hour or lowest available"
+      },
+      "namecheap": {
+        "login": "Sign in to Namecheap",
+        "navigate": "Domain List → Manage → Advanced DNS",
+        "addRecords": "Add custom records with Firebase values",
+        "ttl": "Set TTL to 10 minutes"
+      },
+      "googleDomains": {
+        "login": "Sign in to Google Domains",
+        "navigate": "Select domain → DNS",
+        "addRecords": "Add custom records",
+        "ttl": "Keep default TTL"
+      }
+    }
+  },
+  "validation": {
+    "commands": [
+      "nslookup {{CUSTOM_DOMAIN}}",
+      "dig {{CUSTOM_DOMAIN}} A",
+      "curl -I https://{{CUSTOM_DOMAIN}}",
+      "openssl s_client -connect {{CUSTOM_DOMAIN}}:443 -servername {{CUSTOM_DOMAIN}}"
+    ],
+    "expected": {
+      "dns": "Should resolve to Firebase IP addresses",
+      "ssl": "Should show valid SSL certificate",
+      "redirects": "HTTP should redirect to HTTPS"
+    }
+  },
+  "troubleshooting": {
+    "commonIssues": [
+      {
+        "issue": "DNS not propagating",
+        "solution": "Wait 24-48 hours, check with multiple DNS servers",
+        "check": "Use https://dnschecker.org/ to check global propagation"
+      },
+      {
+        "issue": "SSL certificate not issued",
+        "solution": "Ensure DNS records are correct and verification is complete",
+        "check": "Check Firebase console for SSL status"
+      },
+      {
+        "issue": "Redirects not working",
+        "solution": "Check firebase.json redirects configuration",
+        "check": "Test with curl -I -L https://domain.com"
+      }
+    ],
+    "commands": {
+      "checkDNS": "firebase hosting:sites:{{PROJECT_ID}}:domains:list",
+      "checkSSL": "firebase hosting:sites:{{PROJECT_ID}}:domains:{{CUSTOM_DOMAIN}}:ssl:get-status",
+      "renewSSL": "firebase hosting:sites:{{PROJECT_ID}}:domains:{{CUSTOM_DOMAIN}}:ssl:renew"
+    }
+  },
+  "security": {
+    "headers": {
+      "hsts": "Already configured in firebase.json",
+      "csp": "Already configured in firebase.json with domain whitelist",
+      "cors": "Update backend CORS to include custom domain"
+    },
+    "recommendations": [
+      "Set up domain auto-renewal",
+      "Monitor SSL certificate expiry",
+      "Set up security alerts",
+      "Use DNSSEC if supported by provider"
+    ]
+  },
+  "monitoring": {
+    "uptime": {
+      "endpoint": "https://{{CUSTOM_DOMAIN}}",
+      "checkInterval": "15 minutes for production, 1 hour for development",
+      "alerts": "Configure in monitoring/uptime-config.json"
+    },
+    "performance": {
+      "tools": ["Google PageSpeed Insights", "GTmetrix", "Lighthouse"],
+      "metrics": ["Load time", "TTI", "CLS", "FID"]
+    },
+    "analytics": {
+      "tracking": "Update analytics configuration to use custom domain",
+      "events": "Track page views, user interactions, errors"
+    }
+  }
+}

@@ -40,15 +40,38 @@ That's it! The development server will hot-reload automatically as you make chan
 
 ### Production Deployment
 
+PrintStack now supports Firebase Hosting with automated CI/CD deployment:
+
 ```bash
 # Build for production
 npm run build:prod
 
-# Or run full deployment pipeline
-npm run deploy:build
+# Deploy to Firebase (requires setup)
+npm run deploy
+
+# Emergency procedures
+npm run emergency-rollback -- "Reason for rollback" "Approver name"
+npm run deploy-emergency -- "Emergency reason" "https://emergency.yourdomain.com"
+
+# Custom domain setup
+npm run setup-domain -- --domain yourdomain.com --dry-run
+
+# Monitoring and verification
+npm run uptime-monitor
+npm run verify-deployment -- --url https://yourdomain.com
+npm run verify-rollback -- "https://yourdomain.com" "admin@yourdomain.com"
 ```
 
-The built files will be available in the `deploy/` directory.
+#### Firebase Hosting Features
+
+- **Automated CI/CD**: GitHub Actions workflows for production and development
+- **Custom domains**: Automated domain setup with DNS configuration
+- **SSL certificates**: Automatic HTTPS with custom domains
+- **Global CDN**: Fast content delivery through Firebase's global network
+- **Rollback capabilities**: Emergency rollback to previous deployments
+- **Performance monitoring**: Real-time Web Vitals and uptime monitoring
+- **Security headers**: Production-grade security configuration
+- **Quota management**: Automated bandwidth and usage monitoring
 
 ## 📦 Features
 
@@ -110,9 +133,15 @@ npm run format:check        # Check code formatting
 npm run type-check          # TypeScript type checking
 
 # Deployment
+npm run deploy              # Deploy to Firebase Hosting
 npm run deploy:build        # Full deployment pipeline
 npm run deploy:check        # Build with analysis
 npm run clean:build         # Clean build directories
+
+# Firebase Hosting
+npm run setup-domain        # Custom domain setup
+npm run verify-deployment   # Deployment verification
+npm run uptime-monitor       # Uptime monitoring
 
 # Optimization
 npm run optimize:images     # Optimize images
@@ -140,13 +169,29 @@ printstack/
 │   ├── App.jsx             # Main application component
 │   └── main.jsx            # Application entry point
 ├── scripts/                # Build and deployment scripts
-│   ├── deploy.js           # Deployment pipeline
-│   ├── sync-deploy.js      # Folder synchronization
+│   ├── setup-custom-domain.cjs # Custom domain setup
+│   ├── verify-deployment.js # Deployment verification
+│   ├── uptime-monitor.js   # Uptime monitoring
 │   ├── analyze-bundle.js   # Bundle analysis
 │   └── bundlephobia-check.js # Bundle size analysis
+├── monitoring/             # Monitoring and health checks
+│   ├── uptime-config.json  # Uptime monitoring configuration
+│   └── health-check.js      # Health monitoring
+├── docs/                   # Documentation
+│   ├── custom-domain-setup.md # Custom domain guide
+│   ├── dns-configuration-guide.md # DNS configuration
+│   ├── emergency-rollback.md # Emergency rollback procedures
+│   └── redirect-configuration.md # 301 redirect rules and SEO
+├── templates/              # Configuration templates
+│   └── dns-config-template.json # DNS configuration template
+├── .github/                # GitHub workflows
+│   └── workflows/          # CI/CD workflows
+│       ├── deploy-prod.yml # Production deployment
+│       ├── deploy-dev.yml  # Development deployment
+│       └── uptime-monitor.yml # Uptime monitoring
+├── firebase.json           # Firebase hosting configuration
 ├── package.json            # Dependencies and scripts
 ├── vite.config.js          # Development configuration
-├── vite.prod.config.js     # Production configuration
 └── README.md               # This file
 ```
 
@@ -167,44 +212,110 @@ printstack/
 - **Compression**: Gzip and Brotli asset compression
 - **Bundle analysis**: Detailed size and dependency analysis
 
+### Firebase Hosting Configuration
+
+- **Security headers**: Production-grade CSP, HSTS, and security policies
+- **Global CDN**: Fast content delivery through Firebase's network
+- **SSL certificates**: Automatic HTTPS with custom domains
+- **Custom domains**: Automated domain setup with DNS configuration
+- **Rollback system**: Emergency rollback to previous deployments
+- **Performance monitoring**: Real-time Web Vitals tracking
+- **Uptime monitoring**: Automated health checks and alerting
+- **Quota management**: Bandwidth and storage usage monitoring
+
 ## 🚀 Deployment
 
-### Automated Deployment Pipeline
+### Firebase Hosting Deployment
+
+#### Automated CI/CD Deployment
+
+PrintStack uses GitHub Actions for automated deployment to Firebase Hosting:
 
 ```bash
-# Full production deployment
-node scripts/deploy.js
+# Manual deployment to production
+npm run deploy
 
-# With options
-node scripts/deploy.js --skip-tests --env production --sw
+# Development deployment
+npm run deploy:dev
+
+# Monitor deployment status
+npm run uptime-monitor
+
+# Verify deployment health
+npm run verify-deployment -- --url https://yourdomain.com
 ```
 
-**Features:**
+**Production Workflow Features:**
+- Manual approval requirement for production deployments
+- Comprehensive pre-deployment safety checks
 - Automated testing and linting
 - Production build optimization
-- Bundle analysis and reporting
-- Deployment manifest generation
-- Error handling and recovery
+- Performance validation
+- Emergency rollback capabilities
+- Deployment verification and health checks
 
-### File Synchronization
+**Development Workflow Features:**
+- Automatic deployment on code merges
+- Development environment isolation
+- Staging/prechannel deployments
+- Rollback protection for critical features
+
+#### Custom Domain Setup
 
 ```bash
-# Sync to deployment target
-node scripts/sync-deploy.js --target /var/www/html
+# Setup custom domain (dry run)
+npm run setup-domain -- --domain yourdomain.com --dry-run
 
-# Watch for changes
-node scripts/sync-deploy.js --watch
+# Configure production domain
+npm run setup-domain -- --domain app.yourdomain.com --environment prod
 
-# Dry run preview
-node scripts/sync-deploy.js --dry-run
+# Configure development domain
+npm run setup-domain -- --domain dev.yourdomain.com --environment dev
+
+# Generate DNS configuration
+npm run setup-domain -- --domain yourdomain.com --generate-dns
 ```
 
-**Features:**
-- Bidirectional file synchronization
-- Backup creation and rollback
-- Real-time watching capabilities
-- Exclusion patterns and filters
-- Integrity verification with checksums
+**Domain Setup Features:**
+- Automated DNS record generation
+- Support for multiple domain providers
+- SSL certificate provisioning
+- Domain verification
+- Monitoring integration
+- DNS propagation tracking
+
+#### Monitoring and Observability
+
+```bash
+# Uptime monitoring
+npm run uptime-monitor -- --continuous
+
+# Health monitoring
+npm run uptime-monitor -- --endpoint https://yourdomain.com
+
+# Performance monitoring
+npm run performance:audit
+
+# Export monitoring data
+node monitoring/uptime-monitor.js --export
+```
+
+**Monitoring Features:**
+- Real-time uptime monitoring with GitHub Actions
+- Performance metrics collection (Web Vitals)
+- Health checks and alerting
+- Quota usage monitoring and management
+- Error boundary integration
+- Automated deployment verification
+
+#### Security and Performance
+
+- **Security Headers**: Production CSP, HSTS, X-Frame-Options, XSS protection
+- **SSL/TLS**: Automatic HTTPS with certificate management
+- **Global CDN**: Fast content delivery worldwide
+- **Error Handling**: Comprehensive error boundaries and graceful degradation
+- **Performance**: Optimized bundle splitting, caching, and CDN delivery
+- **Quota Management**: Bandwidth and storage monitoring with automatic throttling
 
 ## ♿ Accessibility & Performance
 
