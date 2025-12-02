@@ -1,0 +1,251 @@
+name: Uptime Monitoring
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      endpoint:
+        description: 'Specific endpoint to check (optional)'
+        required: false
+        default: ''
+      environment:
+        description: 'Environment to check (dev/prod/all)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - dev
+          - prod
+  repository_dispatch:
+    types: [uptime-check]
+
+jobs:
+  uptime-check:
+    name: Endpoint Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Run uptime monitor
+        id: monitor
+        run: |
+          # Create monitoring directory if it doesn't exist
+          mkdir -p monitoring
+
+          # Update config with actual deployment URLs
+          cat > monitoring/uptime-config.json << 'EOF'
+          {
+            "endpoints": [
+              {
+                "name": "PrintStack Production",
+                "url": "${{ vars.PROD_URL || 'https://printstack-prod.web.app' }}",
+                "method": "GET",
+                "frequency": "900",
+                "regions": ["us-east1"],
+                "alerts": {
+                  "response_time_threshold": "3000",
+                  "success_rate_threshold": "99.5",
+                  "consecutive_failures": "3"
+                }
+              }
+              ${{ github.event.inputs.environment == 'prod' || github.event.inputs.environment == 'all' && format(',
+              {
+                "name": "PrintStack Development",
+                "url": "{0}",
+                "method": "GET",
+                "frequency": "900",
+                "regions": ["us-east1"],
+                "alerts": {
+                  "response_time_threshold": "5000",
+                  "success_rate_threshold": "95.0",
+                  "consecutive_failures": "5"
+                }
+              }', vars.DEV_URL || 'https://printstack-dev.web.app') || '' }}
+            ],
+            "alert_channels": [
+              {
+                "name": "github_issues",
+                "type": "github_issues",
+                "enabled": true
+              }
+            ]
+          }
+          EOF
+
+          # Run the monitoring script
+          node monitoring/uptime-monitor.js
+
+        continue-on-error: true
+
+      - name: Parse monitoring results
+        id: parse
+        if: always()
+        run: |
+          if [ -f monitoring/metrics.json ]; then
+            echo "metrics_file_exists=true" >> $GITHUB_OUTPUT
+
+            # Extract summary stats
+            SUCCESSFUL=$(node -p 'JSON.parse(require("fs").readFileSync("monitoring/metrics.json", "utf8")).summary.successful_checks')
+            TOTAL=$(node -p 'JSON.parse(require("fs").readFileSync("monitoring/metrics.json", "utf8")).summary.total_checks')
+            AVG_RESPONSE=$(node -p 'JSON.parse(require("fs").readFileSync("monitoring/metrics.json", "utf8")).summary.average_response_time')
+
+            echo "successful=$SUCCESSFUL" >> $GITHUB_OUTPUT
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "average_response=$AVG_RESPONSE" >> $GITHUB_OUTPUT
+
+            if [ $TOTAL -gt 0 ]; then
+              SUCCESS_RATE=$(( SUCCESSFUL * 100 / TOTAL ))
+              echo "success_rate=$SUCCESS_RATE" >> $GITHUB_OUTPUT
+            else
+              echo "success_rate=0" >> $GITHUB_OUTPUT
+            fi
+
+            # Check for recent failures
+            RECENT_FAILURES=$(node -p '(JSON.parse(require("fs").readFileSync("monitoring/metrics.json", "utf8")).checks || []).filter(c => !c.success && (Date.now() - new Date(c.timestamp).getTime()) < 3600000).length')
+            echo "recent_failures=$RECENT_FAILURES" >> $GITHUB_OUTPUT
+          else
+            echo "metrics_file_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for failures and create issue
+        if: steps.parse.outputs.success_rate < '90' || steps.parse.outputs.recent_failures != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const successRate = `${{ steps.parse.outputs.success_rate }}`;
+            const recentFailures = `${{ steps.parse.outputs.recent_failures }}`;
+            const total = `${{ steps.parse.outputs.total }}`;
+            const successful = `${{ steps.parse.outputs.successful }}`;
+            const avgResponse = `${{ steps.parse.outputs.average_response }}`;
+
+            let title = 'Uptime Monitoring Issues Detected';
+            let body = `## 🚨 Uptime Monitoring Alert
+
+            **Timestamp:** ${new Date().toISOString()}
+            **Repository:** ${{ github.repository }}
+            **Workflow:** ${{ github.workflow }}
+
+            ### 📊 Monitoring Summary
+            - **Total Checks:** ${total}
+            - **Successful:** ${successful}
+            - **Failed:** ${total - successful}
+            - **Success Rate:** ${successRate}%
+            - **Recent Failures (1h):** ${recentFailures}
+            - **Average Response Time:** ${avgResponse}ms
+
+            ### 🎯 Alert Thresholds
+            - Success Rate Target: 90%
+            - Maximum Recent Failures: 0
+
+            ### 🔧 Recommended Actions
+            1. Check deployment logs for failed deployments
+            2. Verify Firebase Hosting configuration
+            3. Check for any recent code changes
+            4. Monitor error tracking dashboards
+            5. Consider rollback if issues persist
+
+            ---
+            *This issue was created automatically by the Uptime Monitoring workflow.*`;
+
+            // Check if similar issue already exists and is open
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['uptime-monitor', 'auto-alert']
+            });
+
+            const similarIssue = existingIssues.data.find(issue =>
+              issue.title.includes(title) &&
+              (Date.now() - new Date(issue.created_at).getTime()) < 3600000 // Last hour
+            );
+
+            if (similarIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: similarIssue.number,
+                body: body
+              });
+
+              console.log(`Updated existing issue #${similarIssue.number}`);
+            } else {
+              // Create new issue
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['uptime-monitor', 'auto-alert']
+              });
+
+              console.log(`Created new issue #${issue.data.number}`);
+            }
+
+      - name: Upload monitoring artifacts
+        if: always() && steps.parse.outputs.metrics_file_exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: uptime-monitor-results-${{ github.run_number }}
+          path: |
+            monitoring/metrics.json
+            monitoring/uptime.log
+          retention-days: 30
+
+      - name: Send Slack notification (if configured)
+        if: failure() && vars.SLACK_WEBHOOK_URL != ''
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"🚨 PrintStack uptime monitoring failed!\nSuccess rate: ${{ steps.parse.outputs.success_rate }}%\nRecent failures: ${{ steps.parse.outputs.recent_failures }}\nWorkflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+            "${{ vars.SLACK_WEBHOOK_URL }}"
+        continue-on-error: true
+
+      - name: Send Discord notification (if configured)
+        if: failure() && vars.DISCORD_WEBHOOK_URL != ''
+        run: |
+          curl -X POST -H 'Content-Type: application/json' \
+            --data '{"content":"🚨 PrintStack uptime monitoring failed!\n\n**Success Rate:** ${{ steps.parse.outputs.success_rate }}%\n**Recent Failures:** ${{ steps.parse.outputs.recent_failures }}\n\n[View Workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"}' \
+            "${{ vars.DISCORD_WEBHOOK_URL }}"
+        continue-on-error: true
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ "${{ steps.parse.outputs.metrics_file_exists }}" == "true" ]; then
+            echo "## 📊 Uptime Monitoring Results" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Total Checks | ${{ steps.parse.outputs.total }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Successful | ${{ steps.parse.outputs.successful }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Success Rate | ${{ steps.parse.outputs.success_rate }}% |" >> $GITHUB_STEP_SUMMARY
+            echo "| Average Response | ${{ steps.parse.outputs.average_response }}ms |" >> $GITHUB_STEP_SUMMARY
+            echo "| Recent Failures | ${{ steps.parse.outputs.recent_failures }} |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            if [ "${{ steps.parse.outputs.success_rate }}" -lt "90" ] || [ "${{ steps.parse.outputs.recent_failures }}" != "0" ]; then
+              echo "⚠️ **Alert conditions detected**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ **All systems healthy**" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "## ❌ Monitoring Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Could not retrieve monitoring results." >> $GITHUB_STEP_SUMMARY
+          fi
