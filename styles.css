@@ -27,7 +27,14 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.app-container {
   display: flex;
+  min-height: 100vh;
+  flex: 1;
 }
 
 .sidebar {
@@ -2509,7 +2516,6 @@ mark {
 .app-footer {
   background: linear-gradient(135deg, var(--secondary-color) 0%, var(--logo-dark) 100%);
   color: #ffffff;
-  margin-top: auto;
   border-top: 3px solid var(--primary-color);
   margin-top: 50px;
 }
