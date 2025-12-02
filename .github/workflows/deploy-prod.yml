@@ -1,5 +1,9 @@
 name: Deploy to Production
 
+permissions:
+  contents: write
+  actions: read
+
 on:
   push:
     branches: [main]
