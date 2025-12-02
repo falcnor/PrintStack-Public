@@ -211,6 +211,11 @@ jobs:
 
         echo "✅ Backup created with tag: $BACKUP_TAG"
 
+    - name: Setup Google Application Credentials
+      run: |
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > service-account-key.json
+        echo "GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json" >> $GITHUB_ENV
+
     - name: Deploy to Firebase Production
       id: deploy-prod
       run: |
@@ -243,8 +248,6 @@ jobs:
             fi
           fi
         done
-      env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
       timeout-minutes: 12
 
     - name: Production deployment verification
@@ -389,6 +392,11 @@ jobs:
         curl -sL https://firebase.tools | bash
         echo "$PATH" >> $GITHUB_PATH
 
+    - name: Setup Google Application Credentials for Rollback
+      run: |
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > service-account-key.json
+        echo "GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json" >> $GITHUB_ENV
+
     - name: Execute emergency rollback
       run: |
         echo "🚨 EXECUTING EMERGENCY ROLLBACK..."
@@ -405,5 +413,3 @@ jobs:
           echo "❌ No previous version available for rollback"
           echo "🚨 MANUAL INTERVENTION REQUIRED"
         fi
-      env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}

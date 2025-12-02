@@ -87,6 +87,11 @@ jobs:
         fi
         echo "lock_check=true" >> $GITHUB_OUTPUT
 
+    - name: Setup Google Application Credentials
+      run: |
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}' > service-account-key.json
+        echo "GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json" >> $GITHUB_ENV
+
     - name: Deploy to Firebase Development
       id: deploy-dev
       run: |
@@ -116,8 +121,6 @@ jobs:
             fi
           fi
         done
-      env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}
       timeout-minutes: 8
 
     - name: Deployment verification
