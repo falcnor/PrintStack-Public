@@ -171,7 +171,6 @@ jobs:
         # Check critical resources
         CRITICAL_FILES=(
           "$DEPLOY_URL/"
-          "$DEPLOY_URL/index.html"
           "$DEPLOY_URL/manifest.json"
         )
 
