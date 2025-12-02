@@ -106,7 +106,7 @@ jobs:
 
         # Show current Firebase project for debugging
         echo "🔍 Firebase current project:"
-        firebase list --json | jq -r '.[] | select(.active == true) | .projectId'
+        firebase projects:list
 
         # Show service account being used
         echo "🔍 Using service account: firebase-adminsdk-fbsvc@${{ env.FIREBASE_PROJECT }}.iam.gserviceaccount.com"
