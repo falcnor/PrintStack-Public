@@ -1,5 +1,11 @@
 name: Uptime Monitoring
 
+# Add permissions for the workflow
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
 on:
   schedule:
     # Run every 15 minutes
