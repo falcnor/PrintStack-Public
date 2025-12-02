@@ -21,7 +21,7 @@ jobs:
   deploy:
     name: Deploy to Development Environment
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ env.DEPLOY_TIMEOUT_MINUTES }}
+    timeout-minutes: 10
     concurrency:
       group: dev-deployment
       cancel-in-progress: false
