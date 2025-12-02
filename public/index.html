@@ -10,6 +10,31 @@
       content="Comprehensive 3D printing inventory management system for tracking filaments, models, and print history"
     />
 
+    <!-- Debug Script for Environment Testing -->
+    <script>
+      console.log('🔧 Debug script loaded from HTML!');
+
+      // Create simple environment detection
+      window.PrintStackTest = {
+        quickTest: function() {
+          console.log('🧪 Environment Test (HTML Inline)');
+          console.log('==================================');
+          console.log('Hostname:', window.location.hostname);
+          console.log('Origin:', window.location.origin);
+          console.log('Environment:', window.location.hostname.includes('localhost') ? 'development' : 'production');
+          console.log('✅ Basic test working!');
+          return {
+            hostname: window.location.hostname,
+            origin: window.location.origin,
+            env: window.location.hostname.includes('localhost') ? 'development' : 'production'
+          };
+        }
+      };
+
+      console.log('✅ PrintStackTest attached to window!');
+      console.log('💡 Try: window.PrintStackTest.quickTest()');
+    </script>
+
     <!-- Progressive enhancement fallback -->
     <noscript>
       <style>

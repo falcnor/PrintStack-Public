@@ -1,0 +1,16 @@
+{
+  "status": "ok",
+  "timestamp": "{{TIMESTAMP}}",
+  "version": "{{VERSION}}",
+  "environment": "{{ENVIRONMENT}}",
+  "checks": {
+    "javascript": "operational",
+    "storage": "operational",
+    "performance": "monitoring",
+    "security": "enabled"
+  },
+  "endpoints": {
+    "health": "/api/health.json",
+    "metrics": "/api/metrics.json"
+  }
+}

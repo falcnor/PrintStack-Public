@@ -72,9 +72,9 @@ Application needs to detect which Firebase environment it's running in and adjus
 - **FR-003**: System MUST provide GitHub Actions workflow that automatically deploys to production environment when code is pushed to main branch
 - **FR-004**: System MUST detect which Firebase environment the application is running in (dev vs production)
 - **FR-005**: System MUST maintain separate domain names for development and production sites
-- **FR-006**: System MUST support SSL certificates automatically for both environments
-- **FR-007**: System MUST handle custom domain configuration if required for production site
-- **FR-008**: Development team MUST be able to access development site for testing with localStorage that remains completely separate from production user data
+- **FR-006**: System MUST handle custom domain configuration including SSL certificates for production site if required
+- **FR-007**: Development team MUST be able to access development site for testing with localStorage that remains completely separate from production user data
+- **FR-008**: System MUST provide graceful degradation if Firebase hosting services become unavailable
 
 ### Key Entities *(include if feature involves data)*
 
@@ -83,7 +83,7 @@ Application needs to detect which Firebase environment it's running in and adjus
 - **Deployment Configuration**: Containing build settings, environment variables, and deployment targets for each Firebase project
 - **Environment Detection**: Logic that determines which Firebase project is serving the current application instance
 - **Domain Configuration**: Managing custom domains, SSL certificates, and DNS settings for each environment
-- **Isolated LocalStorage**: Separate browser storage for dev team testing vs production user data
+- **Environment-Specific LocalStorage**: Separate browser storage namespaces for development team testing vs production user data
 
 ## Success Criteria *(mandatory)*
 
@@ -93,14 +93,14 @@ Application needs to detect which Firebase environment it's running in and adjus
 - **SC-002**: Production deployment process completes successfully within 10 minutes when triggered
 - **SC-003**: Zero downtime of either development or production sites during deployment process
 - **SC-004**: Environment detection accuracy of 100% - application always correctly identifies its environment
-- **SC-00**: Both sites achieve 99.9% uptime measured over a 30-day period
-- **SC-006**: Page load times under 2 seconds for both environments (targeting 1 second)
+- **SC-005**: Both sites achieve 99.9% uptime measured over a 30-day period with automated monitoring alerts for any downtime events
+- **SC-006**: Page load times under 2 seconds for both environments (measured via Web Vitals LCP metric with empty cache, targeting 1 second average)
 - **SC-007**: All deployments are reversible with automatic rollback capability within 30 seconds
 
 ### Constitution Alignment
 
 - **Clean Code First**: Firebase configuration files follow clear structure, deployment scripts are self-documenting with proper error handling
 - **User Experience Obsession**: Both environments load immediately with no deployment errors, users see consistent experience across environments
-- **Progressive Enhancement**: Application remains fully functional if Firebase hosting features fail, with graceful fallback handling
+- **Progressive Enhancement**: Application remains fully functional if Firebase hosting features fail, with graceful fallback handling including local development mode, offline functionality, and basic error pages
 - **Data Integrity**: Deployment process preserves all user data, zero data loss during environment updates or rollbacks
 - **Simplicity & Maintainability**: Hosting configuration uses Firebase standard practices, minimal custom build complexity, clear separation between environments

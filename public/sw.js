@@ -1,9 +1,10 @@
 // Service Worker for PrintStack application
-// Provides offline capability and caching strategies
+// Provides offline capability and caching strategies with progressive enhancement
 
 const CACHE_NAME = 'printstack-v1.0.0';
 const STATIC_CACHE = 'printstack-static-v1.0.0';
 const DYNAMIC_CACHE = 'printstack-dynamic-v1.0.0';
+const FALLBACK_CACHE = 'printstack-fallback-v1.0.0';
 
 // Files to cache for offline functionality
 const STATIC_ASSETS = [
@@ -13,8 +14,60 @@ const STATIC_ASSETS = [
   '/styles.css',
   // Add core application assets
   '/manifest.json',
-  '/favicon.ico'
+  '/favicon.ico',
+  // Progressive enhancement fallbacks
+  '/offline.html',
+  '/offline-fallback.js'
 ];
+
+// Critical application assets that should always be available
+const CRITICAL_ASSETS = [
+  '/index.html',
+  '/offline.html',
+  '/manifest.json'
+];
+
+// Fallback responses for different content types
+const FALLBACK_RESPONSES = {
+  html: () => caches.match('/offline.html'),
+  json: () => new Response(JSON.stringify({
+    error: true,
+    message: 'Offline - No cached data available',
+    offline: true,
+    timestamp: new Date().toISOString()
+  }), {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache'
+    }
+  }),
+  js: () => new Response('/* Offline - Service unavailable */', {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: {
+      'Content-Type': 'application/javascript',
+      'Cache-Control': 'no-cache'
+    }
+  }),
+  css: () => new Response('/* Offline - Styles unavailable */', {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: {
+      'Content-Type': 'text/css',
+      'Cache-Control': 'no-cache'
+    }
+  }),
+  image: () => new Response('', {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: {
+      'Content-Type': 'image/svg+xml',
+      'Cache-Control': 'no-cache'
+    }
+  })
+};
 
 // API endpoints and routes that should be cached
 const CACHEABLE_ROUTES = [
@@ -31,18 +84,40 @@ self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker');
 
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((cache) => {
-        console.log('[SW] Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
-      })
-      .then(() => {
-        console.log('[SW] Static assets cached successfully');
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error('[SW] Failed to cache static assets:', error);
-      })
+    Promise.all([
+      // Cache static assets
+      caches.open(STATIC_CACHE)
+        .then((cache) => {
+          console.log('[SW] Caching static assets');
+          return cache.addAll(STATIC_ASSETS);
+        }),
+      // Pre-populate fallback cache with essential responses
+      caches.open(FALLBACK_CACHE)
+        .then((cache) => {
+          console.log('[SW] Preparing fallback responses');
+          return Promise.all([
+            cache.put('/offline-fallback.html', new Response(createOfflineHTML(), {
+              headers: { 'Content-Type': 'text/html' }
+            })),
+            cache.put('/offline-data.json', new Response(JSON.stringify({
+              filaments: [],
+              models: [],
+              prints: [],
+              settings: {},
+              offline: true
+            }), {
+              headers: { 'Content-Type': 'application/json' }
+            }))
+          ]);
+        })
+    ])
+    .then(() => {
+      console.log('[SW] Service worker installation complete');
+      return self.skipWaiting();
+    })
+    .catch((error) => {
+      console.error('[SW] Failed to install service worker:', error);
+    })
   );
 });
 
@@ -55,7 +130,7 @@ self.addEventListener('activate', (event) => {
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+            if (![CACHE_NAME, STATIC_CACHE, DYNAMIC_CACHE, FALLBACK_CACHE].includes(cacheName)) {
               console.log(`[SW] Deleting old cache: ${cacheName}`);
               return caches.delete(cacheName);
             }
@@ -111,9 +186,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Default: network-first with cache fallback
+  // Default: network-first with progressive fallbacks
   event.respondWith(
-    networkFirstWithCacheFallback(request)
+    progressiveFetchWithFallbacks(request)
   );
 });
 
@@ -433,11 +508,238 @@ async function removeQueuedAction(actionId) {
 }
 
 /**
- * Periodic cache cleanup
+ * Progressive fetch with multiple fallback layers
+ */
+async function progressiveFetchWithFallbacks(request) {
+  try {
+    // 1. Try network first
+    const networkResponse = await fetchWithTimeout(request);
+
+    if (networkResponse.ok) {
+      // Cache successful responses
+      const cache = await caches.open(DYNAMIC_CACHE);
+      cache.put(request, networkResponse.clone());
+      return networkResponse;
+    }
+
+    throw new Error(`Network response not ok: ${networkResponse.status}`);
+
+  } catch (networkError) {
+    console.log(`[SW] Network failed for: ${request.url}, trying cache`);
+
+    try {
+      // 2. Try cache
+      const cachedResponse = await caches.match(request);
+
+      if (cachedResponse) {
+        console.log('[SW] Serving from cache');
+        return cachedResponse;
+      }
+    } catch (cacheError) {
+      console.error('[SW] Cache access failed:', cacheError);
+    }
+
+    try {
+      // 3. Try content-type specific fallbacks
+      const fallbackResponse = await getContentTypeFallback(request);
+      if (fallbackResponse) {
+        console.log('[SW] Serving content-type fallback');
+        return fallbackResponse;
+      }
+    } catch (fallbackError) {
+      console.error('[SW] Content-type fallback failed:', fallbackError);
+    }
+
+    // 4. Final fallback - basic offline response
+    console.log('[SW] All fallbacks exhausted, serving basic offline response');
+    return new Response('Offline - Service temporarily unavailable', {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: {
+        'Content-Type': 'text/plain',
+        'Cache-Control': 'no-cache'
+      }
+    });
+  }
+}
+
+/**
+ * Get content-type specific fallback
+ */
+async function getContentTypeFallback(request) {
+  const url = new URL(request.url);
+  const path = url.pathname.toLowerCase();
+
+  // Determine content type from extension or Accept header
+  let contentType = 'html';
+
+  if (path.endsWith('.js')) contentType = 'js';
+  else if (path.endsWith('.css')) contentType = 'css';
+  else if (path.match(/\.(jpg|jpeg|png|gif|webp|svg|ico)$/)) contentType = 'image';
+  else if (path.endsWith('.json')) contentType = 'json';
+  else if (request.headers.get('Accept')?.includes('application/json')) contentType = 'json';
+  else if (request.headers.get('Accept')?.includes('text/css')) contentType = 'css';
+  else if (request.headers.get('Accept')?.includes('application/javascript')) contentType = 'js';
+
+  const fallbackFunction = FALLBACK_RESPONSES[contentType];
+  if (fallbackFunction) {
+    return await fallbackFunction();
+  }
+
+  // Default to HTML fallback for navigation requests
+  if (request.mode === 'navigate') {
+    return await FALLBACK_RESPONSES.html();
+  }
+
+  return null;
+}
+
+/**
+ * Create offline HTML page
+ */
+function createOfflineHTML() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrintStack - Offline</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f5f5f5;
+    }
+    .offline-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .offline-icon {
+      font-size: 4rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 1rem;
+    }
+    .offline-message {
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    .retry-button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .retry-button:hover {
+      background: #0056b3;
+    }
+    .storage-status {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    @media (max-width: 600px) {
+      body {
+        padding: 1rem;
+      }
+      .offline-container {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-container">
+    <div class="offline-icon">📱</div>
+    <h1>Offline Mode</h1>
+    <p class="offline-message">
+      PrintStack is currently unavailable. You're viewing a limited offline version.
+      Some features may not work until you reconnect to the internet.
+    </p>
+    <button class="retry-button" onclick="window.location.reload()">
+      Try Again
+    </button>
+
+    <div class="storage-status">
+      <p><strong>Local Data Status:</strong></p>
+      <p id="storage-status">Checking local storage...</p>
+    </div>
+  </div>
+
+  <script>
+    // Check if we have local data available
+    try {
+      const filaments = localStorage.getItem('printstack_filaments');
+      const models = localStorage.getItem('printstack_models');
+      const prints = localStorage.getItem('printstack_prints');
+
+      if (filaments || models || prints) {
+        document.getElementById('storage-status').textContent =
+          '✓ Local data available - You can view existing records when back online.';
+      } else {
+        document.getElementById('storage-status').textContent =
+          'No local data found - App will be fully functional when back online.';
+      }
+    } catch (error) {
+      document.getElementById('storage-status').textContent =
+        'Unable to access local storage.';
+    }
+
+    // Periodically check for connection
+    setInterval(() => {
+      if (navigator.onLine) {
+        window.location.reload();
+      }
+    }, 30000);
+  </script>
+</body>
+</html>`;
+}
+
+/**
+ * Enhanced background sync with better error handling
+ */
+self.addEventListener('sync', (event) => {
+  console.log('[SW] Background sync event:', event.tag);
+
+  if (event.tag === 'background-sync') {
+    event.waitUntil(
+      handleBackgroundSync()
+        .then(() => {
+          console.log('[SW] Background sync completed successfully');
+        })
+        .catch((error) => {
+          console.error('[SW] Background sync failed:', error);
+        })
+    );
+  }
+});
+
+/**
+ * Periodic cache cleanup with better error handling
  */
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CACHE_CLEANUP') {
     cleanupOldCache();
+  }
+
+  if (event.data && event.data.type === 'FORCE_REFRESH') {
+    forceRefreshCache();
   }
 });
 
@@ -446,7 +748,7 @@ function cleanupOldCache() {
     return Promise.all(
       cacheNames.map((cacheName) => {
         // Keep only current caches
-        if (![CACHE_NAME, STATIC_CACHE, DYNAMIC_CACHE].includes(cacheName)) {
+        if (![CACHE_NAME, STATIC_CACHE, DYNAMIC_CACHE, FALLBACK_CACHE].includes(cacheName)) {
           console.log(`[SW] Cleaning up old cache: ${cacheName}`);
           return caches.delete(cacheName);
         }
@@ -455,4 +757,36 @@ function cleanupOldCache() {
   });
 }
 
-console.log('[SW] Service worker file loaded');
+async function forceRefreshCache() {
+  try {
+    // Clear dynamic cache
+    await caches.delete(DYNAMIC_CACHE);
+    console.log('[SW] Dynamic cache cleared');
+
+    // Notify all clients
+    const clients = await self.clients.matchAll();
+    clients.forEach(client => {
+      client.postMessage({
+        type: 'CACHE_REFRESHED',
+        timestamp: Date.now()
+      });
+    });
+  } catch (error) {
+    console.error('[SW] Failed to refresh cache:', error);
+  }
+}
+
+/**
+ * Network status change detection
+ */
+self.addEventListener('online', () => {
+  console.log('[SW] Application is online');
+  // Trigger any pending sync actions
+  self.registration.sync.register('background-sync');
+});
+
+self.addEventListener('offline', () => {
+  console.log('[SW] Application is offline');
+});
+
+console.log('[SW] Service worker loaded with enhanced fallback mechanisms');
