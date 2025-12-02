@@ -56,23 +56,38 @@ jobs:
         echo "$HOME/.firebase/bin" >> $GITHUB_PATH
       shell: bash
 
-    - name: Verify build (development mode)
-      run: npm run build:prod
-      timeout-minutes: 5
-      env:
-        NODE_ENV: production
-
-    - name: Check build output
+    - name: Prepare deployment files
       run: |
-        if [ ! -d "dist" ]; then
-          echo "❌ Build failed - dist directory not found"
-          exit 1
+        echo "📦 Preparing vanilla JavaScript deployment..."
+        mkdir -p dist
+
+        # Copy core application files
+        cp index.html dist/
+        cp script.js dist/
+        cp styles.css dist/
+
+        # Copy PWA files from public directory
+        if [ -f "public/favicon.ico" ]; then
+          cp public/favicon.ico dist/
         fi
-        if [ ! -f "dist/index.html" ]; then
-          echo "❌ Build failed - index.html not found"
-          exit 1
+        if [ -f "public/offline.html" ]; then
+          cp public/offline.html dist/
         fi
-        echo "✅ Build verification passed"
+        if [ -f "public/sw.js" ]; then
+          cp public/sw.js dist/
+        fi
+
+        # Copy images directory if it exists
+        if [ -d "images" ]; then
+          cp -r images dist/
+        fi
+
+        # Copy api directory from public if it exists
+        if [ -d "public/api" ]; then
+          cp -r public/api dist/
+        fi
+
+        echo "✅ Files prepared for deployment"
         ls -la dist/
 
     - name: Deployment lock check

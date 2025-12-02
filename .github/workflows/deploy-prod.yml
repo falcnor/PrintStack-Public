@@ -158,30 +158,39 @@ jobs:
       timeout-minutes: 5
       continue-on-error: true
 
-    - name: Production build
-      run: npm run build
-      timeout-minutes: 5
-      env:
-        NODE_ENV: production
-
-    - name: Verify production build
+    - name: Prepare production files
       run: |
-        echo "🏗️ Verifying production build..."
+        echo "📦 Preparing vanilla JavaScript production deployment..."
+        mkdir -p dist
 
-        if [ ! -d "dist" ]; then
-          echo "❌ Build failed - dist directory not found"
-          exit 1
+        # Copy core application files
+        cp index.html dist/
+        cp script.js dist/
+        cp styles.css dist/
+
+        # Copy PWA files from public directory
+        if [ -f "public/favicon.ico" ]; then
+          cp public/favicon.ico dist/
+        fi
+        if [ -f "public/offline.html" ]; then
+          cp public/offline.html dist/
+        fi
+        if [ -f "public/sw.js" ]; then
+          cp public/sw.js dist/
         fi
 
-        if [ ! -f "dist/index.html" ]; then
-          echo "❌ Build failed - index.html not found"
-          exit 1
+        # Copy images directory if it exists
+        if [ -d "images" ]; then
+          cp -r images dist/
         fi
 
-        # Check for production optimizations
-        if grep -q "process.env.NODE_ENV" dist/assets/*.js 2>/dev/null; then
-          echo "⚠️ Warning: Found NODE_ENV references in built files"
+        # Copy api directory from public if it exists
+        if [ -d "public/api" ]; then
+          cp -r public/api dist/
         fi
+
+        echo "✅ Production files prepared for deployment"
+        ls -la dist/
 
         # Verify build size
         BUILD_SIZE=$(du -sh dist | cut -f1)
@@ -192,7 +201,6 @@ jobs:
         fi
 
         echo "✅ Production build verification passed"
-        ls -la dist/
 
     - name: Security scan
       run: |
