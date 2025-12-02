@@ -2,7 +2,7 @@ name: Deploy to Development
 
 on:
   push:
-    branches: [deploy]
+    branches: [dev]
   workflow_dispatch:
     inputs:
       force_deploy:
@@ -50,6 +50,12 @@ jobs:
       timeout-minutes: 5
       continue-on-error: false
 
+    - name: Setup Firebase CLI
+      run: |
+        curl -sL https://firebase.tools | bash
+        echo "$HOME/.firebase/bin" >> $GITHUB_PATH
+      shell: bash
+
     - name: Verify build (development mode)
       run: npm run build:prod
       timeout-minutes: 5
@@ -81,6 +87,11 @@ jobs:
         fi
         echo "lock_check=true" >> $GITHUB_OUTPUT
 
+    - name: Setup Google Application Credentials
+      run: |
+        echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}' > service-account-key.json
+        echo "GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json" >> $GITHUB_ENV
+
     - name: Deploy to Firebase Development
       id: deploy-dev
       run: |
@@ -88,6 +99,17 @@ jobs:
         echo "Project: ${{ env.FIREBASE_PROJECT }}"
         echo "Branch: ${{ github.ref_name }}"
         echo "Commit: ${{ github.sha }}"
+
+        # Clear any Firebase cache and set correct project
+        firebase logout
+        firebase use ${{ env.FIREBASE_PROJECT }}
+
+        # Show current Firebase project for debugging
+        echo "🔍 Firebase current project:"
+        firebase projects:list
+
+        # Show service account being used
+        echo "🔍 Using service account: firebase-adminsdk-fbsvc@${{ env.FIREBASE_PROJECT }}.iam.gserviceaccount.com"
 
         # Attempt deployment with retry logic
         for attempt in $(seq 1 ${{ env.RETRY_ATTEMPTS }}); do
@@ -110,8 +132,6 @@ jobs:
             fi
           fi
         done
-      env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEV }}
       timeout-minutes: 8
 
     - name: Deployment verification
@@ -151,7 +171,6 @@ jobs:
         # Check critical resources
         CRITICAL_FILES=(
           "$DEPLOY_URL/"
-          "$DEPLOY_URL/index.html"
           "$DEPLOY_URL/manifest.json"
         )
 

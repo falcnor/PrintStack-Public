@@ -1,18 +1,12 @@
 {
   "hosting": {
     "public": "dist",
-    "site": "printstack-prod",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
     ],
     "redirects": [
-      {
-        "regex": "/.well-known.*",
-        "destination": "/.well-known",
-        "type": 404
-      },
       {
         "source": "/home",
         "destination": "/",
@@ -104,21 +98,6 @@
         "type": 301
       },
       {
-        "regex": "/(www\\.)?printstack\\.app",
-        "destination": "https://printstack.dev",
-        "type": 301
-      },
-      {
-        "regex": "/(www\\.)?printstack\\.io",
-        "destination": "https://printstack.dev",
-        "type": 301
-      },
-      {
-        "source": "/http://*",
-        "destination": "https://printstack.dev",
-        "type": 301
-      },
-      {
         "regex": "/add/(.*)",
         "destination": "/$1/add",
         "type": 301
@@ -134,13 +113,8 @@
         "type": 301
       },
       {
-        "source": "/api/v1/:path*",
-        "destination": "/api/:path*",
-        "type": 301
-      },
-      {
-        "source": "/api/v2/:path*",
-        "destination": "/api/:path*",
+        "regex": "/api/v[12]/(.*)",
+        "destination": "/api/$1",
         "type": 301
       },
       {
