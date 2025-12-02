@@ -1,7 +1,6 @@
 {
   "hosting": {
     "public": "dist",
-    "site": "printstack-prod",
     "ignore": [
       "firebase.json",
       "**/.*",
