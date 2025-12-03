@@ -15,10 +15,8 @@ import { initQuotaMonitoring } from './utils/quotaManagement';
 // Import simple debug test utilities first
 import './utils/debug-test.js';
 
-// Import development tools (only in development mode)
-if (isDevelopment()) {
-  import './utils/dev-tools.js';
-}
+// Import development tools (always import, logic inside file handles conditional execution)
+import './utils/dev-tools.js';
 
 // Import global styles
 import './styles/global.css';

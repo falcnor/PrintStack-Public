@@ -113,4 +113,5 @@ monitoring/metrics.json
 monitoring/uptime.log
 
 # Shell scripts (only keep in docs)
-*.sh
+*.sh# Master Data Repository Directory
+master-data/
