@@ -42,6 +42,12 @@ export default [
       react: reactPlugin,
       import: importPlugin
     },
+    settings: {
+      react: {
+        version: '19.2.0',
+        flowVersion: '0.0.0'
+      }
+    },
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': [
